@@ -83,3 +83,32 @@ test('serializes CPU-heavy parses through a single background queue', async () =
   assert.equal(peak, 1)
   assert.equal(queue.pending, 0)
 })
+
+test('disables PDF scripting and bounds image allocation before reading page text', async () => {
+  let options
+  let destroyed = false
+  const fakePdfJs = {
+    getDocument(value) {
+      options = value
+      return {
+        promise: Promise.resolve({
+          numPages: 1,
+          getPage: async () => ({
+            getTextContent: async () => ({ items: [{ str: 'safe PDF text', hasEOL: true }] }),
+          }),
+          destroy: async () => { destroyed = true },
+        }),
+      }
+    },
+  }
+  await withFile('safe.pdf', Buffer.from('%PDF-1.4\n'), async resource => {
+    const parsed = await parseResource({ ...resource, kind: 'pdf' }, {
+      loadPdfJs: async () => fakePdfJs,
+    })
+    assert.equal(parsed.chunks[0].text, 'safe PDF text')
+  })
+  assert.equal(options.enableScripting, false)
+  assert.equal(options.isEvalSupported, false)
+  assert.equal(options.maxImageSize, 16_777_216)
+  assert.equal(destroyed, true)
+})
