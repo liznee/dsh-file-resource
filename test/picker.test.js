@@ -229,7 +229,9 @@ test('adds one divider that separates attach from the original command rows', ()
 
   assert.equal(env.styles.length, 1)
   assert.match(env.styles[0].textContent, /dsh-slash-option-command-0/)
-  assert.match(env.styles[0].textContent, /box-shadow/)
+  assert.match(env.styles[0].textContent, /dsh-slash-option-command-0::after/)
+  assert.match(env.styles[0].textContent, /height:\s*1px/)
+  assert.match(env.styles[0].textContent, /background:\s*rgba\(255,\s*255,\s*255,\s*0\.18\)/)
 
   secondCleanup()
   assert.equal(env.styles[0].removed, false)
