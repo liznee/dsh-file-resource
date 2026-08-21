@@ -127,6 +127,11 @@ export class ResourceStore {
 
   async listSession(sessionId, { status } = {}) {
     this.assertOpen()
+    return this.listSessionSync(sessionId, { status })
+  }
+
+  listSessionSync(sessionId, { status } = {}) {
+    this.assertOpen()
     const id = validateSessionId(sessionId)
     return (this.index.sessions[id] ?? [])
       .filter(binding => status === undefined || binding.status === status)
