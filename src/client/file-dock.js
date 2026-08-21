@@ -55,10 +55,21 @@ export function placeDockInsideComposer(dock, documentRef = document) {
   visible.hidden = false
   visible.dataset.composerAttachment = 'true'
   composer.insertBefore(visible, scroll)
+  const Observer = documentRef.defaultView?.MutationObserver ?? globalThis.MutationObserver
+  const observer = typeof Observer === 'function'
+    ? new Observer(() => { visible.innerHTML = dock.innerHTML })
+    : null
+  observer?.observe(dock, {
+    attributes: true,
+    characterData: true,
+    childList: true,
+    subtree: true,
+  })
 
   return {
     visible,
     dispose() {
+      observer?.disconnect()
       visible.remove()
       dock.hidden = false
     },
