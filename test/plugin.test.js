@@ -43,6 +43,17 @@ test('client decoration opens the native picker from the existing command row', 
   assert.equal(opened, 1)
 })
 
+test('client decoration returns a rejected promise when native activation fails', async () => {
+  const decoration = createAttachDecoration({
+    open: () => { throw new Error('picker denied') },
+  })
+
+  const result = decoration.ui.options({ sessionId: 'session-1' }, new AbortController().signal)
+
+  assert.equal(result instanceof Promise, true)
+  await assert.rejects(result, /picker denied/)
+})
+
 test('client half declares only the services it uses', () => {
   assert.deepEqual(clientInject, ['commandUi'])
 })

@@ -170,6 +170,26 @@ test('prefers the native showPicker API when the browser exposes it', () => {
   assert.equal(env.input.clicks, 0)
 })
 
+test('releases a failed native activation so the user can retry', () => {
+  const env = fakeEnvironment()
+  let settled = 0
+  env.input.showPicker = () => { throw new Error('picker denied') }
+  const picker = createImagePicker({
+    document: env.documentRef,
+    window: env.windowRef,
+    onFiles: () => {},
+    onSettled: () => { settled += 1 },
+  })
+
+  assert.throws(() => { picker.open() }, /picker denied/)
+  assert.equal(settled, 1)
+
+  let shown = 0
+  env.input.showPicker = () => { shown += 1 }
+  picker.open()
+  assert.equal(shown, 1)
+})
+
 test('cancel settles the picker without dispatching files', () => {
   const env = fakeEnvironment()
   let selected = 0
