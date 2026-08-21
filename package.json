@@ -43,7 +43,7 @@
     "pack:check": "npm pack --dry-run"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "^22.19.0 || >=24.0.0"
   },
   "license": "MIT",
   "keywords": [
@@ -55,11 +55,11 @@
     "file-picker"
   ],
   "dependencies": {
-    "officeparser": "7.3.0"
+    "fflate": "0.8.3",
+    "pdfjs-dist": "6.2.108"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
-    "fflate": "0.8.3",
     "react": "^18.2.0",
     "react-test-renderer": "^18.2.0"
   }

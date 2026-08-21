@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 
 import { chunkText } from './resource-reader.js'
 
-const OFFICE_KINDS = new Set(['pdf', 'docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp', 'rtf', 'epub'])
+const ARCHIVE_KINDS = new Set(['docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp', 'rtf', 'epub'])
 
 function decodeText(bytes) {
   if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) {
@@ -32,12 +32,18 @@ function extractedLength(chunks) {
   return chunks.reduce((sum, chunk) => sum + chunk.text.length, 0)
 }
 
-async function defaultOfficeParserLoader() {
-  return import('officeparser')
+async function defaultArchiveParserLoader() {
+  return import('./archive-parser.js')
+}
+
+async function defaultPdfParserLoader() {
+  return import('./pdf-parser.js')
 }
 
 export async function parseResource(resource, {
-  loadOfficeParser = defaultOfficeParserLoader,
+  loadArchiveParser = defaultArchiveParserLoader,
+  loadPdfParser = defaultPdfParserLoader,
+  loadPdfJs,
   maxExtractedChars = 10_000_000,
   chunkChars = 12_000,
   signal,
@@ -50,32 +56,19 @@ export async function parseResource(resource, {
     if (text.length > maxExtractedChars) throw new Error(`extracted content exceeds ${maxExtractedChars} characters`)
     return { kind: 'text', chunks: chunkText(text, { maxChars: chunkChars }) }
   }
-  if (!OFFICE_KINDS.has(resource.kind)) throw new Error(`no parser for resource type: ${resource.kind}`)
-
-  const { OfficeParser, OfficeGenerator } = await loadOfficeParser()
+  const bytes = await readFile(resource.objectPath)
   signal?.throwIfAborted()
-  const ast = await OfficeParser.parseOffice(resource.objectPath, {
-    fileType: resource.kind,
-    extractAttachments: false,
-    includeRawContent: false,
-    serializeRawContent: false,
-    ocr: false,
-    signal,
-  })
-  signal?.throwIfAborted()
-  let generated = await OfficeGenerator.generate(ast, 'chunks', {
-    chunksConfig: {
-      strategy: 'document-structure',
-      maxChunkSize: chunkChars,
-      addStartIndex: true,
-      tableSplitStrategy: 'row',
-    },
-  })
-  let chunks = normalizeChunks(generated?.value)
-  if (chunks.length === 0) {
-    generated = await OfficeGenerator.generate(ast, 'text')
-    chunks = chunkText(String(generated?.value ?? ''), { maxChars: chunkChars })
+  let parsed
+  if (resource.kind === 'pdf') {
+    const { parsePdf } = await loadPdfParser()
+    parsed = await parsePdf(bytes, { chunkChars, loadPdfJs, maxExtractedChars, signal })
+  } else if (ARCHIVE_KINDS.has(resource.kind)) {
+    const { parseArchive } = await loadArchiveParser()
+    parsed = await parseArchive(bytes, { kind: resource.kind, chunkChars, maxExtractedChars, signal })
+  } else {
+    throw new Error(`no parser for resource type: ${resource.kind}`)
   }
+  const chunks = normalizeChunks(parsed?.chunks)
   if (extractedLength(chunks) > maxExtractedChars) {
     throw new Error(`extracted content exceeds ${maxExtractedChars} characters`)
   }

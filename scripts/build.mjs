@@ -8,7 +8,7 @@ await Promise.all([
     entryPoints: ['src/index.js'],
     outfile: 'lib/index.js',
     bundle: true,
-    external: ['officeparser'],
+    external: ['fflate', 'pdfjs-dist'],
     format: 'esm',
     platform: 'node',
     sourcemap: true,

@@ -48,7 +48,7 @@ test('uses extension and magic bytes together and rejects executable masquerades
   }), /unsupported file type/)
 })
 
-test('rejects highly amplified ZIP documents before the office parser sees them', async () => {
+test('rejects highly amplified ZIP documents before archive inflation', async () => {
   const bomb = Buffer.from(zipSync({ 'word/document.xml': strToU8('x'.repeat(2_000_000)) }, { level: 9 }))
   await assert.rejects(() => validateDeclaredFile({
     fileName: 'bomb.docx',
