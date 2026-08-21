@@ -1,12 +1,30 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { apply as applyHost, inject as hostInject, name } from '../src/index.js'
+import { apply as applyHost, createFileOnlyMessage, inject as hostInject, name } from '../src/index.js'
 import {
   ATTACH_COMMAND,
   createAttachDecoration,
+  findWakeMarkerRow,
   inject as clientInject,
 } from '../src/client/index.js'
+
+test('file-only wake gives the model a concrete hidden instruction', () => {
+  const message = createFileOnlyMessage()
+  assert.equal(message.role, 'user')
+  assert.equal(message.source.plugin, 'dsh-file-upload')
+  assert.match(message.content[0].text, /read.*attached files/iu)
+  assert.match(message.content[0].text, /key facts/iu)
+})
+
+test('locates the complete Harness context row for the hidden wake marker', () => {
+  const row = { hidden: false }
+  const source = {
+    closest: selector => selector === '[data-chat-flow-kind="context"]' ? row : null,
+    parentElement: null,
+  }
+  assert.equal(findWakeMarkerRow(source), row)
+})
 
 test('host half registers an alphabetically leading attach command', async () => {
   let definition
