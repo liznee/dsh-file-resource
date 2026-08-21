@@ -2,11 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
-  IMAGE_ACCEPT,
-  createImagePicker,
+  FILE_ACCEPT,
+  createFilePicker,
   dismissPickerOverlay,
   dispatchImagesAsDrop,
   installMenuLayerStyles,
+  partitionSelectedFiles,
 } from '../src/picker.js'
 
 class FakeDataTransfer {
@@ -70,8 +71,8 @@ function fakeEnvironment() {
     },
     dispatchEvent: event => { documentEvents.push(event); return true },
     querySelector: selector => {
-      if (selector === 'style[data-plugin-css="dsh-image-upload"]') {
-        return styles.find(style => !style.removed && style.dataset.pluginCss === 'dsh-image-upload') ?? null
+      if (selector === 'style[data-plugin-css="dsh-file-upload"]') {
+        return styles.find(style => !style.removed && style.dataset.pluginCss === 'dsh-file-upload') ?? null
       }
       assert.equal(selector, '[data-composer-card] textarea:not(:disabled)')
       return textarea
@@ -101,8 +102,25 @@ function fakeEnvironment() {
   }
 }
 
-test('declares every image media type accepted by Harness', () => {
-  assert.equal(IMAGE_ACCEPT, 'image/png,image/jpeg,image/webp,image/gif')
+test('declares native images and common document formats in one picker', () => {
+  assert.match(FILE_ACCEPT, /image\/png/)
+  assert.match(FILE_ACCEPT, /\.pdf/)
+  assert.match(FILE_ACCEPT, /\.docx/)
+  assert.match(FILE_ACCEPT, /\.xlsx/)
+  assert.match(FILE_ACCEPT, /\.pptx/)
+  assert.match(FILE_ACCEPT, /\.txt/)
+})
+
+test('routes images through Harness and documents through the private resource path', () => {
+  const files = [
+    { name: 'photo.png', type: 'image/png' },
+    { name: 'notes.txt', type: 'text/plain' },
+    { name: 'scan.pdf', type: 'application/pdf' },
+  ]
+  assert.deepEqual(partitionSelectedFiles(files), {
+    images: [files[0]],
+    documents: [files[1], files[2]],
+  })
 })
 
 test('dispatches selected files through the official document drop path', () => {
@@ -124,7 +142,7 @@ test('configures a reusable multi-image picker and settles selected files once',
   const env = fakeEnvironment()
   const selected = []
   let settled = 0
-  const picker = createImagePicker({
+  const picker = createFilePicker({
     document: env.documentRef,
     window: env.windowRef,
     onFiles: files => { selected.push(...files) },
@@ -132,7 +150,7 @@ test('configures a reusable multi-image picker and settles selected files once',
   })
 
   assert.equal(env.input.type, 'file')
-  assert.equal(env.input.accept, IMAGE_ACCEPT)
+  assert.equal(env.input.accept, FILE_ACCEPT)
   assert.equal(env.input.multiple, true)
   assert.equal(env.input.hidden, true)
 
@@ -157,7 +175,7 @@ test('prefers the native showPicker API when the browser exposes it', () => {
   const env = fakeEnvironment()
   let shown = 0
   env.input.showPicker = () => { shown += 1 }
-  const picker = createImagePicker({
+  const picker = createFilePicker({
     document: env.documentRef,
     window: env.windowRef,
     onFiles: () => {},
@@ -174,7 +192,7 @@ test('releases a failed native activation so the user can retry', () => {
   const env = fakeEnvironment()
   let settled = 0
   env.input.showPicker = () => { throw new Error('picker denied') }
-  const picker = createImagePicker({
+  const picker = createFilePicker({
     document: env.documentRef,
     window: env.windowRef,
     onFiles: () => {},
@@ -194,7 +212,7 @@ test('cancel settles the picker without dispatching files', () => {
   const env = fakeEnvironment()
   let selected = 0
   let settled = 0
-  const picker = createImagePicker({
+  const picker = createFilePicker({
     document: env.documentRef,
     window: env.windowRef,
     onFiles: () => { selected += 1 },
