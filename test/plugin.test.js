@@ -70,6 +70,6 @@ test('client decoration returns a rejected promise when native activation fails'
   await assert.rejects(result, /picker denied/)
 })
 
-test('client half declares only the services it uses', () => {
-  assert.deepEqual(clientInject, ['commandUi'])
+test('client half declares the menu, slot, and locale services it uses', () => {
+  assert.deepEqual(clientInject, ['commandUi', 'slots', 'locale'])
 })
