@@ -72,6 +72,47 @@ test('mirrors the document dock inside the composer without moving React-owned D
   assert.equal(dock.hidden, false)
 })
 
+test('keeps the visible composer mirror synchronized with live upload state', () => {
+  const origin = fakeParent('origin')
+  const composer = fakeParent('composer')
+  const scroll = { name: 'scroll', parentNode: composer }
+  const visible = {
+    dataset: {}, hidden: true, innerHTML: 'Uploading 0%', name: 'visible', parentNode: null,
+  }
+  visible.remove = () => { visible.parentNode?.removeChild(visible) }
+  const dock = {
+    dataset: {}, hidden: false, innerHTML: 'Uploading 0%', name: 'dock', parentNode: origin,
+    cloneNode: () => visible,
+  }
+  origin.children.push(dock)
+  composer.children.push(scroll)
+  composer.querySelector = selector => selector === '[data-input-scroll]' ? scroll : null
+  let observerCallback
+  let observedOptions
+  let disconnected = false
+  class FakeMutationObserver {
+    constructor(callback) { observerCallback = callback }
+    observe(_node, options) { observedOptions = options }
+    disconnect() { disconnected = true }
+  }
+  const documentRef = {
+    defaultView: { MutationObserver: FakeMutationObserver },
+    querySelector: selector => selector === '[data-composer-card]' ? composer : null,
+  }
+
+  const mounted = placeDockInsideComposer(dock, documentRef)
+  dock.innerHTML = 'Ready'
+  observerCallback()
+
+  assert.equal(mounted.visible.innerHTML, 'Ready')
+  assert.equal(observedOptions.attributes, true)
+  assert.equal(observedOptions.characterData, true)
+  assert.equal(observedOptions.childList, true)
+  assert.equal(observedOptions.subtree, true)
+  mounted.dispose()
+  assert.equal(disconnected, true)
+})
+
 test('routes remove clicks from the moved dock back to its live resource item', () => {
   const dock = new EventTarget()
   const item = { localId: 'local-one', fileName: 'report.pdf' }
