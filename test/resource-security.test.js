@@ -28,7 +28,7 @@ test('requires same-origin browser requests with an unforgeable custom header', 
       host: '127.0.0.1:3080',
       origin: 'http://127.0.0.1:3080',
       'sec-fetch-site': 'same-origin',
-      'x-dsh-file-upload': '1',
+      'x-dsh-file-resource': '1',
     },
   }))
   assert.throws(() => validateBrowserRequest({

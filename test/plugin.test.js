@@ -12,7 +12,7 @@ import {
 test('file-only wake gives the model a concrete hidden instruction', () => {
   const message = createFileOnlyMessage()
   assert.equal(message.role, 'user')
-  assert.equal(message.source.plugin, 'dsh-file-upload')
+  assert.equal(message.source.plugin, 'dsh-file-resource')
   assert.match(message.content[0].text, /read.*attached files/iu)
   assert.match(message.content[0].text, /key facts/iu)
 })
@@ -50,13 +50,13 @@ test('host half registers an alphabetically leading attach command', async () =>
   try {
     await applyHost(ctx, { resourceRoot: root })
 
-    assert.equal(name, 'dsh-file-upload')
+    assert.equal(name, 'dsh-file-resource')
     assert.deepEqual(hostInject, ['commands', 'webServer', 'tools', 'systemPrompt', 'agents'])
     assert.equal(definition.name, ATTACH_COMMAND)
     assert.match(definition.description, /浏览文件/)
-    assert.equal(route.path, '/dsh-file-upload/v1')
+    assert.equal(route.path, '/dsh-file-resource/v1')
     assert.equal(tool.name, 'read_uploaded_resource')
-    assert.equal(section.name, 'dsh-file-upload:resources')
+    assert.equal(section.name, 'dsh-file-resource:resources')
     assert.deepEqual(await definition.handler({ rawInput: '' }), {
       kind: 'error',
       text: 'Open the Web + menu and choose “attach” to browse files.',

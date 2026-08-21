@@ -72,8 +72,8 @@ function fakeEnvironment() {
     },
     dispatchEvent: event => { documentEvents.push(event); return true },
     querySelector: selector => {
-      if (selector === 'style[data-plugin-css="dsh-file-upload"]') {
-        return styles.find(style => !style.removed && style.dataset.pluginCss === 'dsh-file-upload') ?? null
+      if (selector === 'style[data-plugin-css="dsh-file-resource"]') {
+        return styles.find(style => !style.removed && style.dataset.pluginCss === 'dsh-file-resource') ?? null
       }
       assert.equal(selector, '[data-composer-card] textarea:not(:disabled)')
       return textarea

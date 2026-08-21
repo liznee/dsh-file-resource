@@ -24,15 +24,15 @@ test('renders a compact processing card with real progress and a circular cancel
   assert.equal(root.findByProps({ 'data-file-resource-card': true }).props['data-status'], 'uploading')
   assert.equal(root.findByProps({ role: 'progressbar' }).props['aria-valuenow'], 50)
   const cancel = root.findByProps({ 'aria-label': zh.cancel })
-  assert.match(cancel.props.className, /dsh-file-upload-cancel/)
+  assert.match(cancel.props.className, /dsh-file-resource-cancel/)
   renderer.unmount()
 })
 
 test('keeps document cards compact instead of stretching across the composer', () => {
-  assert.match(FILE_DOCK_STYLES, /\.dsh-file-upload-dock\s*\{[^}]*display:\s*flex/isu)
-  assert.match(FILE_DOCK_STYLES, /\.dsh-file-upload-card\s*\{[^}]*width:\s*220px/isu)
-  assert.match(FILE_DOCK_STYLES, /\.dsh-file-upload-card\s*\{[^}]*max-width:\s*calc\(100vw\s*-\s*48px\)/isu)
-  assert.doesNotMatch(FILE_DOCK_STYLES, /\.dsh-file-upload-card\s*\{[^}]*width:\s*100%/isu)
+  assert.match(FILE_DOCK_STYLES, /\.dsh-file-resource-dock\s*\{[^}]*display:\s*flex/isu)
+  assert.match(FILE_DOCK_STYLES, /\.dsh-file-resource-card\s*\{[^}]*width:\s*220px/isu)
+  assert.match(FILE_DOCK_STYLES, /\.dsh-file-resource-card\s*\{[^}]*max-width:\s*calc\(100vw\s*-\s*48px\)/isu)
+  assert.doesNotMatch(FILE_DOCK_STYLES, /\.dsh-file-resource-card\s*\{[^}]*width:\s*100%/isu)
 })
 
 test('places the document dock inside the composer before the text editor and restores it on cleanup', () => {
@@ -108,7 +108,7 @@ class FakeXhr extends EventTarget {
 }
 
 function selectedEvent(files) {
-  return Object.assign(new Event('dsh-file-upload:selected'), { detail: { files } })
+  return Object.assign(new Event('dsh-file-resource:selected'), { detail: { files } })
 }
 
 function response(body, ok = true, status = 200) {
@@ -233,7 +233,7 @@ test('rejects oversized selections before starting browser uploads', async () =>
       name: `file-${index}.txt`, size: 1, type: 'text/plain',
     }))
     await TestRenderer.act(async () => { documentRef.dispatchEvent(selectedEvent(files)) })
-    assert.match(renderer.root.findByProps({ className: 'dsh-file-upload-name' }).children.join(''), /20/)
+    assert.match(renderer.root.findByProps({ className: 'dsh-file-resource-name' }).children.join(''), /20/)
     await TestRenderer.act(async () => { renderer.unmount() })
   })
 })

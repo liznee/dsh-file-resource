@@ -7,7 +7,7 @@ import test from 'node:test'
 import { ResourceStore } from '../src/resource-store.js'
 
 async function withStore(run, options = {}) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-file-upload-'))
+  const root = await mkdtemp(join(tmpdir(), 'dsh-file-resource-'))
   const store = new ResourceStore({ root, ...options })
   try {
     await store.open()
