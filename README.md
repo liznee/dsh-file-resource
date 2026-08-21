@@ -1,50 +1,97 @@
-# dsh-image-upload
+# dsh-file-upload
 
-为 DeepSeek Harness Web 版补上原生图片文件选择器。
+DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜单顶部增加 `attach`，并用分隔线与 Harness 原生命令区分；不会再增加一个单独按钮。
 
-插件不会新增独立按钮。点击输入框左下角原有的 `+` 后，菜单顶部显示 `attach`（浏览图片），下面保留 Harness 原来的全部命令，并用分隔线区分两层。选择的图片继续走 Harness 官方的附件校验、缩略图、删除、预览、发送和本地持久化流程。
+选择图片时继续使用 Harness 官方图片附件流程。选择文档时，插件在本机解析并保存为会话隔离的私有资源，模型只在需要时通过一个受限读取工具按页、幻灯片、工作表、分块或搜索结果读取。界面不会伪造或显示“请读取某个文件”的用户消息。
 
-## 当前支持范围
+## 功能
 
-- PNG、JPEG、WebP、GIF。
-- 一次可多选；Harness 本地附件存储的默认上限是每条消息 20 张。
-- 默认单张最大 3.5 MiB、每条消息图片合计最大 100 MiB、单边最大 2000 px；部署可以修改这些限制。
-- PDF、Word、Excel 和其他普通文件暂不支持，因为当前 Harness 的附件协议、会话事件、历史渲染和模型请求都只实现了图片。插件不会伪装成已支持这些格式。
+- 一个文件选择器同时接收图片、文档、文本和常见代码文件，可多选。
+- 文档卡片铺满输入区，显示真实上传进度与本地解析状态。
+- 卡片右侧的灰色圆形 `×` 可以取消正在进行的上传或移除文件。
+- 只有文件、没有输入文字时，可直接使用 Harness 原有发送按钮。
+- 图片仍由 Harness 原生预览、删除、持久化和多模态模型流程处理。
+- 文档解析完全在本机完成；上传或解析本身不会调用模型，也没有遥测。
+
+## 支持格式
+
+| 类别 | 格式 |
+| --- | --- |
+| Harness 原生图片 | PNG、JPEG、WebP、GIF |
+| 文档 | PDF、DOCX、XLSX、PPTX、ODT、ODS、ODP、RTF、EPUB |
+| 文本与代码 | TXT、Markdown、CSV、TSV、JSON/JSONL、XML、HTML、YAML、日志、配置、SQL，以及常见 JS/TS/Python/Java/C/C++/C#/Go/Rust/Ruby/PHP/Shell/PowerShell/CSS 文件 |
+
+限制：旧二进制 `DOC`、`XLS`、`PPT` 不支持，请先另存为 `DOCX`、`XLSX`、`PPTX`。PDF 读取文字层；纯扫描件不会自动 OCR，避免后台下载识别模型、额外占用 CPU 或把内容发给第三方。
 
 ## 安装
 
-从 npm Registry 安装：
+要求与当前 DeepSeek Harness 一致：Node.js `22.19+` 或 `24+`。
 
 ```powershell
-dsh plugin --profile web add dsh-image-upload
+dsh plugin --profile web add dsh-file-upload
 ```
+
+重启 `dsh web` 后，从输入框左下角的 `+` 选择 `attach`。
 
 本地开发安装：
 
 ```powershell
 npm install
 npm run build
-dsh plugin --profile web add C:\absolute\path\to\dsh-image-upload
+dsh plugin --profile web add C:\absolute\path\to\dsh-file-upload
 ```
 
-重启 `dsh web` 后生效。
+## 本地存储与清理
 
-## 隐私
+默认缓存位于 `$DSH_HOME/resources/dsh-file-upload/v1`；未设置 `DSH_HOME` 时位于 `~/.dsh/resources/dsh-file-upload/v1`。插件不会把副本或 Markdown 转换文件写进当前项目，也不会改动原文件。
 
-插件不包含网络请求、分析统计或遥测，也不会自己读取文件内容或把文件复制进工作区。系统文件选择器返回的 `File` 对象会被送入 Harness 已有的 document-drop 附件通道；只有用户发送消息后，Harness 才会按当前模型和提供方配置处理图片。
+- 单文件上限：50 MiB。
+- 单次选择上限：20 个文件、合计 200 MiB。
+- 总缓存上限：1 GiB，按内容 SHA-256 去重。
+- 派生文本使用 gzip 压缩，并与原文件一起计入缓存上限。
+- 达到上限时只按 LRU 清理已经发送的旧资源；正在编辑的文件不会被后台淘汰。
+- 已解除引用的对象保留最多 7 天，启动时执行回收；没有常驻扫描器或清理定时器。
+
+## Token 与性能
+
+文档全文不会直接塞进系统提示词。插件固定增加一个读取工具；按 Harness 自带的“4 字符约 1 token”估算，它的 schema 约为 188 tokens。文件索引约为：1 个文件 79 tokens、5 个文件 165 tokens、20 个文件 490 tokens。真正的文档内容仅在模型调用 `read_uploaded_resource` 时进入上下文，默认每次最多返回 8,000 字符，硬上限 24,000 字符。
+
+发布前的小型真实文件基准：Host 冷导入约 12 ms、约 1.6 MiB 堆增量；DOCX/XLSX/PPTX 通常在 3–35 ms 内完成，PDF 第一次加载解析器约 0.1–0.6 秒。主机插件包约 51 KiB；PDF.js 只在第一次处理 PDF 时延迟加载。数据取决于机器和文件复杂度。
+
+## 安全与隐私
+
+- 浏览器接口要求同源请求和插件专用请求头，资源 ID 与会话绑定。
+- 扩展名、声明类型和文件魔数交叉验证，拒绝伪装的可执行文件。
+- ZIP/Office 文件限制条目数、展开体积和压缩比，防止解压炸弹。
+- PDF.js 固定为已修复版本，并显式关闭 PDF 脚本与动态求值；限制页数与图片像素预算。
+- 文件内容中的指令一律被提示为不可信数据。
+- 插件不包含统计、遥测或第三方上传。只有用户发送消息后，所选模型提供方才会按正常 Harness 流程收到模型实际读取的内容。
 
 ## 验证
 
 ```powershell
 npm test
 npm run test:coverage
+npm audit --omit=dev
 npm run pack:check
 ```
 
+当前测试覆盖文件选择、真实进度、取消、会话隔离、配额、缓存回收、恶意 ZIP 防护，以及真实 DOCX/XLSX/PPTX/PDF/ODF/EPUB/RTF 解析。
+
 ## English
 
-Adds a native multi-image file picker to the existing DeepSeek Harness `+` command menu. The `attach` row appears above the original Harness commands and feeds selected PNG, JPEG, WebP, and GIF files into Harness's official image attachment pipeline. PDF, Word, Excel, and other non-image attachments are not supported by the current Harness attachment contract.
+`dsh-file-upload` adds a unified `attach` entry to the existing DeepSeek Harness Web `+` menu. Images continue through Harness's native attachment pipeline. Documents are parsed locally into session-scoped, content-addressed resources and exposed to the model through one bounded read tool; no synthetic user message is shown.
+
+Supported documents: PDF, DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, EPUB, plus common text and source-code formats. Legacy DOC/XLS/PPT files and automatic OCR for image-only PDFs are intentionally unsupported.
+
+Install with:
+
+```powershell
+dsh plugin --profile web add dsh-file-upload
+```
+
+The plugin has no telemetry or third-party file upload. See the Chinese sections above for cache limits, token estimates, security controls, and performance measurements.
 
 ## License
 
-MIT
+MIT © liznee

@@ -17,4 +17,7 @@ test('package exposes both DSH faces and its bundle patch', async () => {
   assert.equal(manifest.dependencies['pdfjs-dist'], '6.2.108')
   assert.equal(manifest.overrides, undefined)
   assert.equal(manifest.engines.node, '^22.19.0 || >=24.0.0')
+  assert.equal(manifest.author, 'liznee')
+  assert.equal(manifest.repository.url, 'git+https://github.com/liznee/dsh-file-upload.git')
+  assert.equal(manifest.publishConfig.access, 'public')
 })
