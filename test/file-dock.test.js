@@ -7,6 +7,7 @@ import {
   FILE_DOCK_STYLES,
   FileResourceDock,
   ResourceCard,
+  bindComposerDockActions,
   en,
   placeDockInsideComposer,
   zh,
@@ -59,6 +60,31 @@ test('places the document dock inside the composer before the text editor and re
   dispose()
   assert.deepEqual(origin.children, [dock])
   assert.equal(dock.dataset.composerAttachment, undefined)
+})
+
+test('routes remove clicks from the moved dock back to its live resource item', () => {
+  const dock = new EventTarget()
+  const item = { localId: 'local-one', fileName: 'report.pdf' }
+  let removed = null
+  const dispose = bindComposerDockActions(
+    dock,
+    localId => localId === item.localId ? item : undefined,
+    value => { removed = value },
+  )
+  const button = { dataset: { fileResourceRemove: item.localId } }
+  const event = new Event('click', { cancelable: true })
+  Object.defineProperty(event, 'target', {
+    value: { closest: selector => selector === '[data-file-resource-remove]' ? button : null },
+  })
+
+  dock.dispatchEvent(event)
+
+  assert.equal(removed, item)
+  assert.equal(event.defaultPrevented, true)
+  dispose()
+  removed = null
+  dock.dispatchEvent(event)
+  assert.equal(removed, null)
 })
 
 function fakeParent(name) {
