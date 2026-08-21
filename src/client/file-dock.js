@@ -66,6 +66,22 @@ export function placeDockInsideComposer(dock, documentRef = document) {
   }
 }
 
+/** Preserve remove/cancel behavior after the dock leaves React's delegated event root. */
+export function bindComposerDockActions(dock, lookupItem, onRemove) {
+  const onClick = event => {
+    const button = event.target?.closest?.('[data-file-resource-remove]')
+    const localId = button?.dataset?.fileResourceRemove
+    if (typeof localId !== 'string') return
+    const item = lookupItem(localId)
+    if (item === undefined) return
+    event.preventDefault()
+    event.stopPropagation()
+    onRemove(item)
+  }
+  dock.addEventListener('click', onClick)
+  return () => { dock.removeEventListener('click', onClick) }
+}
+
 function sizeText(bytes) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -103,6 +119,7 @@ export function ResourceCard({ item, onRemove, t }) {
     }, React.createElement('i', { style: { width: `${Math.round(progress * 100)}%` } }))),
   React.createElement('button', {
     'aria-label': canceling ? t('cancel') : t('remove'), className: 'dsh-file-resource-cancel',
+    'data-file-resource-remove': item.localId,
     onClick: () => { onRemove(item) }, title: canceling ? t('cancel') : t('remove'), type: 'button',
   }, React.createElement(CloseIcon)))
 }
@@ -257,8 +274,20 @@ export function FileResourceDock({ sessionId, input, t }) {
 
   React.useLayoutEffect(() => {
     if (items.length === 0 || typeof document === 'undefined') return undefined
-    return placeDockInsideComposer(dockRef.current, document)
-  }, [items.length > 0, sessionId])
+    const dock = dockRef.current
+    const restore = placeDockInsideComposer(dock, document)
+    const unbind = dock?.dataset?.composerAttachment === 'true'
+      ? bindComposerDockActions(
+          dock,
+          localId => live.current.items.find(item => item.localId === localId),
+          remove,
+        )
+      : () => {}
+    return () => {
+      unbind()
+      restore()
+    }
+  }, [items.length > 0, remove, sessionId])
 
   if (items.length === 0) return null
   return React.createElement('div', {
