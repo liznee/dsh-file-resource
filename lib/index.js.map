@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/shared.js", "../src/index.js"],
+  "sourcesContent": ["export const ATTACH_COMMAND = 'attach'\n", "import { ATTACH_COMMAND } from './shared.js'\n\nexport const name = 'dsh-image-upload'\nexport const inject = ['commands']\n\nconst WEB_ONLY_MESSAGE = 'Open the Web + menu and choose \u201Cattach\u201D to browse image files.'\n\nexport function apply(ctx) {\n  ctx.effect(() => ctx.commands.register({\n    name: ATTACH_COMMAND,\n    description: 'Browse image files (PNG, JPEG, WebP, GIF)',\n    handler: () => Promise.resolve({ kind: 'error', text: WEB_ONLY_MESSAGE }),\n  }), 'dsh-image-upload: attach command')\n}\n"],
+  "mappings": ";AAAO,IAAM,iBAAiB;;;ACEvB,IAAM,OAAO;AACb,IAAM,SAAS,CAAC,UAAU;AAEjC,IAAM,mBAAmB;AAElB,SAAS,MAAM,KAAK;AACzB,MAAI,OAAO,MAAM,IAAI,SAAS,SAAS;AAAA,IACrC,MAAM;AAAA,IACN,aAAa;AAAA,IACb,SAAS,MAAM,QAAQ,QAAQ,EAAE,MAAM,SAAS,MAAM,iBAAiB,CAAC;AAAA,EAC1E,CAAC,GAAG,kCAAkC;AACxC;",
+  "names": []
+}
