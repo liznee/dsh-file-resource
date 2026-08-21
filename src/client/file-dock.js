@@ -26,10 +26,10 @@ export const en = {
 }
 
 export const FILE_DOCK_STYLES = `
-.dsh-file-upload-dock { display: grid; gap: 6px; margin: 0 0 8px; width: 100%; }
-.dsh-file-upload-card { align-items: center; background: rgba(127,127,127,.10); border: 1px solid rgba(127,127,127,.18); border-radius: 10px; box-sizing: border-box; display: grid; gap: 10px; grid-template-columns: 30px minmax(0,1fr) 30px; min-height: 48px; padding: 7px 9px; width: 100%; }
+.dsh-file-upload-dock { box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; max-width: 100%; padding: 4px 12px 2px; width: 100%; }
+.dsh-file-upload-card { align-items: center; background: rgba(127,127,127,.10); border: 1px solid rgba(127,127,127,.18); border-radius: 10px; box-sizing: border-box; display: grid; flex: 0 1 220px; gap: 8px; grid-template-columns: 28px minmax(0,1fr) 28px; max-width: calc(100vw - 48px); min-height: 44px; padding: 6px 7px; width: 220px; }
 .dsh-file-upload-card[data-status='error'] { border-color: color-mix(in srgb, var(--dsw-alias-state-warn-primary, #d88) 45%, transparent); }
-.dsh-file-upload-icon { align-items: center; background: rgba(127,127,127,.16); border-radius: 7px; color: var(--dsw-alias-label-secondary); display: inline-flex; height: 30px; justify-content: center; width: 30px; }
+.dsh-file-upload-icon { align-items: center; background: rgba(127,127,127,.16); border-radius: 7px; color: var(--dsw-alias-label-secondary); display: inline-flex; height: 28px; justify-content: center; width: 28px; }
 .dsh-file-upload-copy { min-width: 0; }
 .dsh-file-upload-name { color: var(--dsw-alias-label-primary); display: block; font-size: 13px; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dsh-file-upload-meta { color: var(--dsw-alias-label-secondary); display: block; font-size: 11px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -40,6 +40,31 @@ export const FILE_DOCK_STYLES = `
 .dsh-file-upload-cancel:focus-visible { outline: 2px solid var(--dsw-alias-state-focus-primary, currentColor); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .dsh-file-upload-progress > i { transition: none; } }
 `
+
+/** Move the rendered dock into Harness's composer card without replacing its native image slot. */
+export function placeDockInsideComposer(dock, documentRef = document) {
+  if (dock === null || dock === undefined) return () => {}
+  const composer = documentRef.querySelector('[data-composer-card]')
+  const scroll = composer?.querySelector?.('[data-input-scroll]')
+  const origin = dock.parentNode
+  if (composer === null || composer === undefined || scroll === null || scroll === undefined
+    || origin === null || origin === undefined || origin === composer) return () => {}
+
+  const marker = documentRef.createComment('dsh-file-resource-dock')
+  origin.insertBefore(marker, dock)
+  composer.insertBefore(dock, scroll)
+  dock.dataset.composerAttachment = 'true'
+
+  return () => {
+    delete dock.dataset.composerAttachment
+    if (marker.parentNode !== null && marker.parentNode !== undefined) {
+      marker.parentNode.insertBefore(dock, marker)
+      marker.remove()
+    } else if (dock.parentNode === composer) {
+      composer.removeChild(dock)
+    }
+  }
+}
 
 function sizeText(bytes) {
   if (bytes < 1024) return `${bytes} B`
@@ -92,6 +117,7 @@ function arrowSendButton(documentRef) {
 
 export function FileResourceDock({ sessionId, input, t }) {
   const [items, setItems] = React.useState([])
+  const dockRef = React.useRef(null)
   const operations = React.useRef(new Map())
   const live = React.useRef({ input, items })
   const previousInput = React.useRef(input)
@@ -229,7 +255,14 @@ export function FileResourceDock({ sessionId, input, t }) {
     }
   }, [sessionId, t])
 
+  React.useLayoutEffect(() => {
+    if (items.length === 0 || typeof document === 'undefined') return undefined
+    return placeDockInsideComposer(dockRef.current, document)
+  }, [items.length > 0, sessionId])
+
   if (items.length === 0) return null
-  return React.createElement('div', { className: 'dsh-file-upload-dock', 'data-file-resource-dock': true },
+  return React.createElement('div', {
+    className: 'dsh-file-upload-dock', 'data-file-resource-dock': true, ref: dockRef,
+  },
     ...items.map(item => React.createElement(ResourceCard, { item, key: item.localId, onRemove: remove, t })))
 }
