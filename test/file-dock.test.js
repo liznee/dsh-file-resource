@@ -34,6 +34,7 @@ test('keeps document cards compact instead of stretching across the composer', (
   assert.match(FILE_DOCK_STYLES, /\.dsh-file-resource-card\s*\{[^}]*width:\s*220px/isu)
   assert.match(FILE_DOCK_STYLES, /\.dsh-file-resource-card\s*\{[^}]*max-width:\s*calc\(100vw\s*-\s*48px\)/isu)
   assert.doesNotMatch(FILE_DOCK_STYLES, /\.dsh-file-resource-card\s*\{[^}]*width:\s*100%/isu)
+  assert.match(FILE_DOCK_STYLES, /\.dsh-file-resource-dock\[hidden\]\s*\{[^}]*display:\s*none/isu)
 })
 
 test('mirrors the document dock inside the composer without moving React-owned DOM', () => {
