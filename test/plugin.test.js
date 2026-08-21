@@ -25,7 +25,7 @@ test('host half registers an alphabetically leading attach command', async () =>
   assert.equal(name, 'dsh-image-upload')
   assert.deepEqual(hostInject, ['commands'])
   assert.equal(definition.name, ATTACH_COMMAND)
-  assert.match(definition.description, /Browse image files/)
+  assert.match(definition.description, /浏览图片文件/)
   assert.deepEqual(await definition.handler({ rawInput: '' }), {
     kind: 'error',
     text: 'Open the Web + menu and choose “attach” to browse image files.',
