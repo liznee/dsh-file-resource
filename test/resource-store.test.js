@@ -83,3 +83,32 @@ test('never returns a resource across session boundaries', async () => {
     await assert.rejects(() => store.getForSession('session-b', item.resourceId), /not attached to this session/)
   })
 })
+
+test('compresses derived text instead of leaving Markdown or JSON sidecars uncompressed', async () => {
+  await withStore(async store => {
+    const item = await store.put({
+      sessionId: 'session-a', fileName: 'notes.txt', mediaType: 'text/plain', bytes: Buffer.from('hello'),
+    })
+    const text = 'repeated content '.repeat(1_000)
+    const ready = await store.setDerived(item.resourceId, {
+      kind: 'text', chunks: [{ index: 0, text, metadata: {} }],
+    })
+    assert.match(ready.derivedPath, /\.json\.gz$/)
+    assert.equal((await stat(ready.derivedPath)).size < Buffer.byteLength(text), true)
+    assert.equal((await store.readDerivedForSession('session-a', item.resourceId)).chunks[0].text, text)
+  })
+})
+
+test('evicts the least-recently-used sent resource only when the cache cap needs room', async () => {
+  await withStore(async store => {
+    const old = await store.put({
+      sessionId: 'session-a', fileName: 'old.txt', mediaType: 'text/plain', bytes: Buffer.alloc(6, 1),
+    })
+    await store.markSent('session-a', [old.resourceId])
+    const current = await store.put({
+      sessionId: 'session-b', fileName: 'new.txt', mediaType: 'text/plain', bytes: Buffer.alloc(6, 2),
+    })
+    assert.equal((await store.getForSession('session-b', current.resourceId)).resourceId, current.resourceId)
+    await assert.rejects(() => store.getForSession('session-a', old.resourceId), /not attached/)
+  }, { maxCacheBytes: 10, maxFileBytes: 8 })
+})

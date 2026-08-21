@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { strToU8, zipSync } from 'fflate'
 
 import {
   normalizeFileName,
@@ -45,4 +46,13 @@ test('uses extension and magic bytes together and rejects executable masquerades
   await assert.rejects(() => validateDeclaredFile({
     fileName: 'payload.exe', mediaType: 'application/octet-stream', bytes: Buffer.from('MZ'),
   }), /unsupported file type/)
+})
+
+test('rejects highly amplified ZIP documents before the office parser sees them', async () => {
+  const bomb = Buffer.from(zipSync({ 'word/document.xml': strToU8('x'.repeat(2_000_000)) }, { level: 9 }))
+  await assert.rejects(() => validateDeclaredFile({
+    fileName: 'bomb.docx',
+    mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    bytes: bomb,
+  }), /archive expansion ratio/)
 })
