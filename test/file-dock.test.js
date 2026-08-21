@@ -36,11 +36,16 @@ test('keeps document cards compact instead of stretching across the composer', (
   assert.doesNotMatch(FILE_DOCK_STYLES, /\.dsh-file-resource-card\s*\{[^}]*width:\s*100%/isu)
 })
 
-test('places the document dock inside the composer before the text editor and restores it on cleanup', () => {
+test('mirrors the document dock inside the composer without moving React-owned DOM', () => {
   const origin = fakeParent('origin')
   const composer = fakeParent('composer')
   const scroll = { name: 'scroll', parentNode: composer }
-  const dock = { dataset: {}, name: 'dock', parentNode: origin }
+  const visible = { dataset: {}, hidden: true, name: 'visible', parentNode: null }
+  visible.remove = () => { visible.parentNode?.removeChild(visible) }
+  const dock = {
+    dataset: {}, hidden: false, name: 'dock', parentNode: origin,
+    cloneNode: () => visible,
+  }
   origin.children.push(dock)
   composer.children.push(scroll)
   composer.querySelector = selector => selector === '[data-input-scroll]' ? scroll : null
@@ -53,13 +58,17 @@ test('places the document dock inside the composer before the text editor and re
     querySelector: selector => selector === '[data-composer-card]' ? composer : null,
   }
 
-  const dispose = placeDockInsideComposer(dock, documentRef)
+  const mounted = placeDockInsideComposer(dock, documentRef)
 
-  assert.deepEqual(composer.children, [dock, scroll])
-  assert.equal(dock.dataset.composerAttachment, 'true')
-  dispose()
   assert.deepEqual(origin.children, [dock])
-  assert.equal(dock.dataset.composerAttachment, undefined)
+  assert.deepEqual(composer.children, [visible, scroll])
+  assert.equal(dock.hidden, true)
+  assert.equal(visible.hidden, false)
+  assert.equal(visible.dataset.composerAttachment, 'true')
+  mounted.dispose()
+  assert.deepEqual(origin.children, [dock])
+  assert.deepEqual(composer.children, [scroll])
+  assert.equal(dock.hidden, false)
 })
 
 test('routes remove clicks from the moved dock back to its live resource item', () => {
