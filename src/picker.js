@@ -87,8 +87,13 @@ export function createImagePicker({
       if (active || disposed) return
       active = true
       windowRef.addEventListener('focus', onWindowFocus, { once: true })
-      if (typeof input.showPicker === 'function') input.showPicker()
-      else input.click()
+      try {
+        if (typeof input.showPicker === 'function') input.showPicker()
+        else input.click()
+      } catch (error) {
+        settle()
+        throw error
+      }
     },
     dispose() {
       if (disposed) return

@@ -15,9 +15,9 @@ export function createAttachDecoration(picker) {
     available: () => true,
     ui: {
       kind: 'popupSelect',
-      options: () => {
+      options: async () => {
         picker.open()
-        return Promise.resolve([])
+        return []
       },
       onSelect: () => {},
     },
