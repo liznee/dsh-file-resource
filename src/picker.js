@@ -10,7 +10,7 @@ export const FILE_ACCEPT = [
 const NATIVE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 const NATIVE_IMAGE_EXTENSION = /\.(?:png|jpe?g|webp|gif)$/iu
 
-const STYLE_ID = 'dsh-file-upload'
+const STYLE_ID = 'dsh-file-resource'
 const MENU_LAYER_STYLES = `
 #dsh-slash-option-command-0 {
   position: relative;
@@ -55,7 +55,7 @@ export function partitionSelectedFiles(files) {
 
 export function dispatchDocumentSelection(files, environment = globalThis) {
   if (files.length === 0) return false
-  return environment.document.dispatchEvent(new environment.CustomEvent('dsh-file-upload:selected', {
+  return environment.document.dispatchEvent(new environment.CustomEvent('dsh-file-resource:selected', {
     bubbles: false,
     cancelable: false,
     detail: { files: [...files] },

@@ -8,7 +8,7 @@ import { ResourceStore } from './resource-store.js'
 import { createReadResourceTool } from './resource-tool.js'
 import { ATTACH_COMMAND } from './shared.js'
 
-export const name = 'dsh-file-upload'
+export const name = 'dsh-file-resource'
 export const inject = ['commands', 'webServer', 'tools', 'systemPrompt', 'agents']
 
 const WEB_ONLY_MESSAGE = 'Open the Web + menu and choose “attach” to browse files.'
@@ -36,7 +36,7 @@ export function createFileOnlyMessage() {
 export async function apply(ctx, config = {}) {
   await ctx.effect(async () => {
     const storeOptions = {
-      root: config.resourceRoot ?? join(dshHome(), 'resources', 'dsh-file-upload', 'v1'),
+      root: config.resourceRoot ?? join(dshHome(), 'resources', 'dsh-file-resource', 'v1'),
       ...config.maxFileBytes === undefined ? {} : { maxFileBytes: config.maxFileBytes },
       ...config.maxBatchBytes === undefined ? {} : { maxBatchBytes: config.maxBatchBytes },
       ...config.maxCacheBytes === undefined ? {} : { maxCacheBytes: config.maxCacheBytes },
@@ -69,7 +69,7 @@ export async function apply(ctx, config = {}) {
       })),
       ctx.tools.register(createReadResourceTool(service)),
       ctx.systemPrompt.section({
-        name: 'dsh-file-upload:resources',
+        name: 'dsh-file-resource:resources',
         order: 180,
         text: ({ agent }) => agent === undefined ? '' : service.promptFor(agent.id),
       }),
@@ -79,5 +79,5 @@ export async function apply(ctx, config = {}) {
       for (const dispose of disposers.reverse()) await Promise.resolve(dispose?.())
       await store.close()
     }
-  }, 'dsh-file-upload: resource runtime')
+  }, 'dsh-file-resource: resource runtime')
 }

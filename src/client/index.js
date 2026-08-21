@@ -10,7 +10,7 @@ import {
 } from '../picker.js'
 import { en, FILE_DOCK_STYLES, FileResourceDock, zh } from './file-dock.js'
 
-const NS = 'file-upload'
+const NS = 'file-resource'
 
 export { ATTACH_COMMAND }
 export const inject = ['commandUi', 'slots', 'locale']
@@ -31,11 +31,11 @@ export function createAttachDecoration(picker) {
 }
 
 function installFileDockStyles() {
-  const existing = document.querySelector('style[data-plugin-css="dsh-file-upload-dock"]')
+  const existing = document.querySelector('style[data-plugin-css="dsh-file-resource-dock"]')
   if (existing !== null) return () => {}
   const style = document.createElement('style')
-  style.dataset.plugin = 'dsh-file-upload'
-  style.dataset.pluginCss = 'dsh-file-upload-dock'
+  style.dataset.plugin = 'dsh-file-resource'
+  style.dataset.pluginCss = 'dsh-file-resource-dock'
   style.textContent = FILE_DOCK_STYLES
   document.head.append(style)
   return () => { style.remove() }
@@ -56,7 +56,7 @@ export function findWakeMarkerRow(source) {
 function installWakeMarkerFilter() {
   const hide = () => {
     for (const source of document.querySelectorAll('[data-context-source]')) {
-      if (source.textContent?.trim() !== 'dsh-file-upload') continue
+      if (source.textContent?.trim() !== 'dsh-file-resource') continue
       const row = findWakeMarkerRow(source)
       if (row === null) continue
       row.hidden = true
@@ -71,11 +71,11 @@ function installWakeMarkerFilter() {
 
 export function apply(ctx) {
   const commandUi = ctx.get('commandUi')
-  if (commandUi === undefined) throw new Error('dsh-image-upload: commandUi service unavailable')
+  if (commandUi === undefined) throw new Error('dsh-file-resource: commandUi service unavailable')
 
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-file-upload: dictionaries')
-  ctx.effect(installFileDockStyles, 'dsh-file-upload: file dock styles')
-  ctx.effect(installWakeMarkerFilter, 'dsh-file-upload: empty wake marker filter')
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-file-resource: dictionaries')
+  ctx.effect(installFileDockStyles, 'dsh-file-resource: file dock styles')
+  ctx.effect(installWakeMarkerFilter, 'dsh-file-resource: empty wake marker filter')
 
   let picker
   ctx.effect(() => {
@@ -94,15 +94,15 @@ export function apply(ctx) {
       picker.dispose()
       removeStyles()
     }
-  }, 'dsh-file-upload: native picker')
+  }, 'dsh-file-resource: native picker')
 
   ctx.effect(() => commandUi.decorate(createAttachDecoration({
     open: () => { picker?.open() },
-  })), 'dsh-file-upload: attach command decoration')
+  })), 'dsh-file-resource: attach command decoration')
 
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock',
-    id: 'file-upload-resources',
+    id: 'file-resource-resources',
     order: -10,
     locale: NS,
   }, FileResourceDock))

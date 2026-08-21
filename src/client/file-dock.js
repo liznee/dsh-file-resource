@@ -26,19 +26,19 @@ export const en = {
 }
 
 export const FILE_DOCK_STYLES = `
-.dsh-file-upload-dock { box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; max-width: 100%; padding: 4px 12px 2px; width: 100%; }
-.dsh-file-upload-card { align-items: center; background: rgba(127,127,127,.10); border: 1px solid rgba(127,127,127,.18); border-radius: 10px; box-sizing: border-box; display: grid; flex: 0 1 220px; gap: 8px; grid-template-columns: 28px minmax(0,1fr) 28px; max-width: calc(100vw - 48px); min-height: 44px; padding: 6px 7px; width: 220px; }
-.dsh-file-upload-card[data-status='error'] { border-color: color-mix(in srgb, var(--dsw-alias-state-warn-primary, #d88) 45%, transparent); }
-.dsh-file-upload-icon { align-items: center; background: rgba(127,127,127,.16); border-radius: 7px; color: var(--dsw-alias-label-secondary); display: inline-flex; height: 28px; justify-content: center; width: 28px; }
-.dsh-file-upload-copy { min-width: 0; }
-.dsh-file-upload-name { color: var(--dsw-alias-label-primary); display: block; font-size: 13px; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dsh-file-upload-meta { color: var(--dsw-alias-label-secondary); display: block; font-size: 11px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dsh-file-upload-progress { background: rgba(127,127,127,.18); border-radius: 99px; display: block; height: 3px; margin-top: 4px; overflow: hidden; width: 100%; }
-.dsh-file-upload-progress > i { background: var(--dsw-alias-label-primary); display: block; height: 100%; transition: width 120ms ease-out; }
-.dsh-file-upload-cancel { align-items: center; background: rgba(127,127,127,.20); border: 0; border-radius: 999px; color: var(--dsw-alias-label-secondary); cursor: pointer; display: inline-flex; height: 28px; justify-content: center; padding: 0; width: 28px; }
-.dsh-file-upload-cancel:hover { background: rgba(127,127,127,.30); color: var(--dsw-alias-label-primary); }
-.dsh-file-upload-cancel:focus-visible { outline: 2px solid var(--dsw-alias-state-focus-primary, currentColor); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .dsh-file-upload-progress > i { transition: none; } }
+.dsh-file-resource-dock { box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; max-width: 100%; padding: 4px 12px 2px; width: 100%; }
+.dsh-file-resource-card { align-items: center; background: rgba(127,127,127,.10); border: 1px solid rgba(127,127,127,.18); border-radius: 10px; box-sizing: border-box; display: grid; flex: 0 1 220px; gap: 8px; grid-template-columns: 28px minmax(0,1fr) 28px; max-width: calc(100vw - 48px); min-height: 44px; padding: 6px 7px; width: 220px; }
+.dsh-file-resource-card[data-status='error'] { border-color: color-mix(in srgb, var(--dsw-alias-state-warn-primary, #d88) 45%, transparent); }
+.dsh-file-resource-icon { align-items: center; background: rgba(127,127,127,.16); border-radius: 7px; color: var(--dsw-alias-label-secondary); display: inline-flex; height: 28px; justify-content: center; width: 28px; }
+.dsh-file-resource-copy { min-width: 0; }
+.dsh-file-resource-name { color: var(--dsw-alias-label-primary); display: block; font-size: 13px; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dsh-file-resource-meta { color: var(--dsw-alias-label-secondary); display: block; font-size: 11px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dsh-file-resource-progress { background: rgba(127,127,127,.18); border-radius: 99px; display: block; height: 3px; margin-top: 4px; overflow: hidden; width: 100%; }
+.dsh-file-resource-progress > i { background: var(--dsw-alias-label-primary); display: block; height: 100%; transition: width 120ms ease-out; }
+.dsh-file-resource-cancel { align-items: center; background: rgba(127,127,127,.20); border: 0; border-radius: 999px; color: var(--dsw-alias-label-secondary); cursor: pointer; display: inline-flex; height: 28px; justify-content: center; padding: 0; width: 28px; }
+.dsh-file-resource-cancel:hover { background: rgba(127,127,127,.30); color: var(--dsw-alias-label-primary); }
+.dsh-file-resource-cancel:focus-visible { outline: 2px solid var(--dsw-alias-state-focus-primary, currentColor); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .dsh-file-resource-progress > i { transition: none; } }
 `
 
 /** Move the rendered dock into Harness's composer card without replacing its native image slot. */
@@ -91,18 +91,18 @@ export function ResourceCard({ item, onRemove, t }) {
         : `${t('failed')}${item.error ? `：${item.error}` : ''}`
   const canceling = item.status === 'uploading' || item.status === 'processing'
   return React.createElement('div', {
-    className: 'dsh-file-upload-card', 'data-file-resource-card': true, 'data-status': item.status,
+    className: 'dsh-file-resource-card', 'data-file-resource-card': true, 'data-status': item.status,
   },
-  React.createElement('span', { className: 'dsh-file-upload-icon' }, React.createElement(FileIcon)),
-  React.createElement('span', { className: 'dsh-file-upload-copy' },
-    React.createElement('span', { className: 'dsh-file-upload-name', title: item.fileName }, item.fileName),
-    React.createElement('span', { className: 'dsh-file-upload-meta' }, `${sizeText(item.size)} · ${status}`),
+  React.createElement('span', { className: 'dsh-file-resource-icon' }, React.createElement(FileIcon)),
+  React.createElement('span', { className: 'dsh-file-resource-copy' },
+    React.createElement('span', { className: 'dsh-file-resource-name', title: item.fileName }, item.fileName),
+    React.createElement('span', { className: 'dsh-file-resource-meta' }, `${sizeText(item.size)} · ${status}`),
     item.status === 'uploading' && React.createElement('span', {
       'aria-label': status, 'aria-valuemax': 100, 'aria-valuemin': 0,
-      'aria-valuenow': Math.round(progress * 100), className: 'dsh-file-upload-progress', role: 'progressbar',
+      'aria-valuenow': Math.round(progress * 100), className: 'dsh-file-resource-progress', role: 'progressbar',
     }, React.createElement('i', { style: { width: `${Math.round(progress * 100)}%` } }))),
   React.createElement('button', {
-    'aria-label': canceling ? t('cancel') : t('remove'), className: 'dsh-file-upload-cancel',
+    'aria-label': canceling ? t('cancel') : t('remove'), className: 'dsh-file-resource-cancel',
     onClick: () => { onRemove(item) }, title: canceling ? t('cancel') : t('remove'), type: 'button',
   }, React.createElement(CloseIcon)))
 }
@@ -175,10 +175,10 @@ export function FileResourceDock({ sessionId, input, t }) {
       const files = Array.isArray(event.detail?.files) ? event.detail.files : []
       if (files.length > 0) void intake(files)
     }
-    document.addEventListener('dsh-file-upload:selected', onSelected)
+    document.addEventListener('dsh-file-resource:selected', onSelected)
     return () => {
       active = false
-      document.removeEventListener('dsh-file-upload:selected', onSelected)
+      document.removeEventListener('dsh-file-resource:selected', onSelected)
       for (const operation of operations.current.values()) operation?.abort?.()
       operations.current.clear()
     }
@@ -262,7 +262,7 @@ export function FileResourceDock({ sessionId, input, t }) {
 
   if (items.length === 0) return null
   return React.createElement('div', {
-    className: 'dsh-file-upload-dock', 'data-file-resource-dock': true, ref: dockRef,
+    className: 'dsh-file-resource-dock', 'data-file-resource-dock': true, ref: dockRef,
   },
     ...items.map(item => React.createElement(ResourceCard, { item, key: item.localId, onRemove: remove, t })))
 }

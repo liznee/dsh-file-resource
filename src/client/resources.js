@@ -22,7 +22,7 @@ export function uploadBrowserResource({
   const xhr = new XMLHttpRequestCtor()
   xhr.open('POST', RESOURCE_ENDPOINT)
   xhr.responseType = 'json'
-  xhr.setRequestHeader('X-DSH-File-Upload', '1')
+  xhr.setRequestHeader('X-DSH-File-Resource', '1')
   xhr.setRequestHeader('X-DSH-Operation', 'upload')
   xhr.setRequestHeader('X-DSH-Session', sessionId)
   xhr.setRequestHeader('X-DSH-File-Name', encodeURIComponent(file.name))
@@ -75,7 +75,7 @@ export async function resourceOperation(sessionId, operation, {
   fetchImpl = fetch,
 } = {}) {
   const headers = {
-    'X-DSH-File-Upload': '1',
+    'X-DSH-File-Resource': '1',
     'X-DSH-Operation': operation,
     'X-DSH-Session': sessionId,
   }
@@ -111,18 +111,18 @@ export function bindFileOnlySendButton(button, { onSend }) {
     update(state) {
       if (state.eligible && !state.busy && !busy) {
         owned = true
-        button.dataset.dshFileSend = 'true'
+      button.dataset.dshFileResourceSend = 'true'
         if (button.disabled) button.disabled = false
       } else {
         owned = false
-        delete button.dataset.dshFileSend
+      delete button.dataset.dshFileResourceSend
         if (!button.disabled) button.disabled = true
       }
     },
     dispose() {
       button.removeEventListener('click', onClick, true)
       if (owned) {
-        delete button.dataset.dshFileSend
+      delete button.dataset.dshFileResourceSend
         button.disabled = true
       }
       owned = false

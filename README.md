@@ -1,4 +1,4 @@
-# dsh-file-upload
+# dsh-file-resource
 
 DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜单顶部增加 `attach`，并用分隔线与 Harness 原生命令区分；不会再增加一个单独按钮。
 
@@ -7,7 +7,7 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 ## 功能
 
 - 一个文件选择器同时接收图片、文档、文本和常见代码文件，可多选。
-- 文档卡片铺满输入区，显示真实上传进度与本地解析状态。
+- 文档以紧凑卡片显示在圆角输入框内部，文件名自动截断，并显示真实上传进度与本地解析状态。
 - 卡片右侧的灰色圆形 `×` 可以取消正在进行的上传或移除文件。
 - 只有文件、没有输入文字时，可直接使用 Harness 原有发送按钮。
 - 图片仍由 Harness 原生预览、删除、持久化和多模态模型流程处理。
@@ -28,7 +28,7 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 要求与当前 DeepSeek Harness 一致：Node.js `22.19+` 或 `24+`。
 
 ```powershell
-dsh plugin --profile web add dsh-file-upload
+dsh plugin --profile web add dsh-file-resource
 ```
 
 重启 `dsh web` 后，从输入框左下角的 `+` 选择 `attach`。
@@ -38,12 +38,12 @@ dsh plugin --profile web add dsh-file-upload
 ```powershell
 npm install
 npm run build
-dsh plugin --profile web add C:\absolute\path\to\dsh-file-upload
+dsh plugin --profile web add C:\absolute\path\to\dsh-file-resource
 ```
 
 ## 本地存储与清理
 
-默认缓存位于 `$DSH_HOME/resources/dsh-file-upload/v1`；未设置 `DSH_HOME` 时位于 `~/.dsh/resources/dsh-file-upload/v1`。插件不会把副本或 Markdown 转换文件写进当前项目，也不会改动原文件。
+默认缓存位于 `$DSH_HOME/resources/dsh-file-resource/v1`；未设置 `DSH_HOME` 时位于 `~/.dsh/resources/dsh-file-resource/v1`。插件不会把副本或 Markdown 转换文件写进当前项目，也不会改动原文件。
 
 - 单文件上限：50 MiB。
 - 单次选择上限：20 个文件、合计 200 MiB。
@@ -80,14 +80,14 @@ npm run pack:check
 
 ## English
 
-`dsh-file-upload` adds a unified `attach` entry to the existing DeepSeek Harness Web `+` menu. Images continue through Harness's native attachment pipeline. Documents are parsed locally into session-scoped, content-addressed resources and exposed to the model through one bounded read tool; no synthetic user message is shown.
+`dsh-file-resource` adds a unified `attach` entry to the existing DeepSeek Harness Web `+` menu. Images continue through Harness's native attachment pipeline. Documents are parsed locally into session-scoped, content-addressed resources and exposed to the model through one bounded read tool; no synthetic user message is shown.
 
 Supported documents: PDF, DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, EPUB, plus common text and source-code formats. Legacy DOC/XLS/PPT files and automatic OCR for image-only PDFs are intentionally unsupported.
 
 Install with:
 
 ```powershell
-dsh plugin --profile web add dsh-file-upload
+dsh plugin --profile web add dsh-file-resource
 ```
 
 The plugin has no telemetry or third-party file upload. See the Chinese sections above for cache limits, token estimates, security controls, and performance measurements.

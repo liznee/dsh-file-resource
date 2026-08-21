@@ -40,7 +40,7 @@ export function validateResourceId(value) {
 export function validateBrowserRequest(request) {
   const headers = request?.headers ?? {}
   const method = String(request?.method ?? '').toUpperCase()
-  const marker = headers['x-dsh-file-upload']
+  const marker = headers['x-dsh-file-resource']
   const host = headers.host
   const origin = headers.origin
   const fetchSite = headers['sec-fetch-site']

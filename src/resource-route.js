@@ -106,7 +106,7 @@ export function createResourceRoute(service, {
           send(response, 413, { ok: false, error: `File exceeds ${maxFileBytes} bytes.` })
           return
         }
-        logger.warn?.(`dsh-file-upload request failed: ${error instanceof Error ? error.message : String(error)}`)
+        logger.warn?.(`dsh-file-resource request failed: ${error instanceof Error ? error.message : String(error)}`)
         send(response, 400, { ok: false, error: 'The file could not be processed.' })
       } finally {
         request.off?.('aborted', onAborted)

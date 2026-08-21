@@ -1,15 +1,15 @@
 {
-  "name": "dsh-file-upload",
+  "name": "dsh-file-resource",
   "version": "0.1.0",
   "description": "Private local file attachments for DeepSeek Harness with native images and bounded document reading.",
   "author": "liznee",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liznee/dsh-file-upload.git"
+    "url": "git+https://github.com/liznee/dsh-file-resource.git"
   },
-  "homepage": "https://github.com/liznee/dsh-file-upload#readme",
+  "homepage": "https://github.com/liznee/dsh-file-resource#readme",
   "bugs": {
-    "url": "https://github.com/liznee/dsh-file-upload/issues"
+    "url": "https://github.com/liznee/dsh-file-resource/issues"
   },
   "publishConfig": {
     "access": "public"
