@@ -69,14 +69,49 @@ function appearsExecutable(bytes) {
     || startsWith(bytes, [0xca, 0xfe, 0xba, 0xbe])
 }
 
+function inspectZipArchive(bytes, { maxEntries = 10_000, maxExpandedBytes = 256 * 1024 * 1024, maxRatio = 500 } = {}) {
+  const minimumEocd = 22
+  const start = Math.max(0, bytes.length - 65_557)
+  let eocd = -1
+  for (let offset = bytes.length - minimumEocd; offset >= start; offset -= 1) {
+    if (bytes.readUInt32LE(offset) === 0x06054b50) { eocd = offset; break }
+  }
+  if (eocd < 0) throw new Error('invalid ZIP archive')
+  const entries = bytes.readUInt16LE(eocd + 10)
+  const directorySize = bytes.readUInt32LE(eocd + 12)
+  const directoryOffset = bytes.readUInt32LE(eocd + 16)
+  if (entries === 0xffff || directorySize === 0xffffffff || directoryOffset === 0xffffffff) {
+    throw new Error('ZIP64 archives are not supported')
+  }
+  if (entries > maxEntries || directoryOffset + directorySize > bytes.length) throw new Error('ZIP archive exceeds safe limits')
+  let cursor = directoryOffset
+  let compressed = 0
+  let expanded = 0
+  for (let index = 0; index < entries; index += 1) {
+    if (cursor + 46 > bytes.length || bytes.readUInt32LE(cursor) !== 0x02014b50) throw new Error('invalid ZIP central directory')
+    compressed += bytes.readUInt32LE(cursor + 20)
+    expanded += bytes.readUInt32LE(cursor + 24)
+    const nameLength = bytes.readUInt16LE(cursor + 28)
+    const extraLength = bytes.readUInt16LE(cursor + 30)
+    const commentLength = bytes.readUInt16LE(cursor + 32)
+    cursor += 46 + nameLength + extraLength + commentLength
+  }
+  if (expanded > maxExpandedBytes) throw new Error(`archive expands beyond ${maxExpandedBytes} bytes`)
+  if (expanded > 1024 * 1024 && expanded / Math.max(1, compressed) > maxRatio) {
+    throw new Error(`archive expansion ratio exceeds ${maxRatio}:1`)
+  }
+}
+
 function validateMagic(kind, bytes) {
   if (appearsExecutable(bytes)) return false
   if (kind === 'text' || kind === 'rtf') return !bytes.subarray(0, 8_192).includes(0)
   if (kind === 'pdf') return bytes.subarray(0, 5).toString('ascii') === '%PDF-'
   if (['docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp', 'epub'].includes(kind)) {
-    return startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])
+    const zipMagic = startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])
       || startsWith(bytes, [0x50, 0x4b, 0x05, 0x06])
       || startsWith(bytes, [0x50, 0x4b, 0x07, 0x08])
+    if (zipMagic) inspectZipArchive(bytes)
+    return zipMagic
   }
   if (kind === 'image') {
     return startsWith(bytes, [0x89, 0x50, 0x4e, 0x47])

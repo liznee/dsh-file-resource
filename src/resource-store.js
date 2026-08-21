@@ -1,8 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
+import { promisify } from 'node:util'
+import { gunzip as gunzipCallback, gzip as gzipCallback } from 'node:zlib'
 
 import { normalizeFileName, validateResourceId, validateSessionId } from './resource-security.js'
+
+const gzip = promisify(gzipCallback)
+const gunzip = promisify(gunzipCallback)
 
 const DEFAULTS = {
   maxFileBytes: 50 * 1024 * 1024,
@@ -62,7 +67,7 @@ export class ResourceStore {
     const resourceId = resourceIdFor(hash)
     const existing = this.index.resources[resourceId]
     this.assertSessionQuota(id, resourceId, buffer.length)
-    if (existing === undefined) this.assertCacheQuota(buffer.length)
+    if (existing === undefined) await this.makeRoom(buffer.length)
 
     const objectRelative = join('objects', hash.slice(0, 2), `${hash}.bin`)
     const objectPath = join(this.root, objectRelative)
@@ -79,7 +84,7 @@ export class ResourceStore {
       this.index.resources[resourceId] = {
         resourceId, hash, fileName: name, mediaType: String(mediaType), kind,
         size: buffer.length, objectRelative, createdAt: this.now(), lastAccess: this.now(),
-        unreferencedAt: null, derivedRelative: null, unitCount: null,
+        unreferencedAt: null, derivedRelative: null, derivedBytes: 0, unitCount: null,
       }
     }
     await this.attach(id, resourceId, name, { flush: false })
@@ -158,12 +163,17 @@ export class ResourceStore {
     const rid = validateResourceId(resourceId)
     const resource = this.index.resources[rid]
     if (resource === undefined) throw new Error('resource not found')
-    const relative = join('derived', resource.hash.slice(0, 2), `${resource.hash}.json`)
+    const relative = join('derived', resource.hash.slice(0, 2), `${resource.hash}.json.gz`)
     const target = join(this.root, relative)
+    const encoded = Buffer.from(JSON.stringify({ version: 1, resourceId: rid, kind, chunks }))
+    const compressed = await gzip(encoded, { level: 6 })
+    const additionalBytes = Math.max(0, compressed.length - (resource.derivedBytes ?? 0))
+    await this.makeRoom(additionalBytes, rid)
     await mkdir(dirname(target), { recursive: true })
-    await writeFile(target, JSON.stringify({ version: 1, resourceId: rid, kind, chunks }), { mode: 0o600 })
+    await writeFile(target, compressed, { mode: 0o600 })
     resource.kind = kind
     resource.derivedRelative = relative
+    resource.derivedBytes = compressed.length
     resource.unitCount = chunks.length
     resource.lastAccess = this.now()
     await this.flush()
@@ -173,7 +183,7 @@ export class ResourceStore {
   async readDerivedForSession(sessionId, resourceId) {
     const resource = await this.getForSession(sessionId, resourceId)
     if (resource.derivedPath === null) throw new Error('resource parsing is not complete')
-    const parsed = JSON.parse(await readFile(resource.derivedPath, 'utf8'))
+    const parsed = JSON.parse((await gunzip(await readFile(resource.derivedPath))).toString('utf8'))
     return { ...resource, chunks: parsed.chunks }
   }
 
@@ -187,7 +197,7 @@ export class ResourceStore {
       await rm(join(this.root, resource.objectRelative), { force: true })
       if (resource.derivedRelative !== null) await rm(join(this.root, resource.derivedRelative), { force: true })
       removedObjects += 1
-      removedBytes += resource.size
+      removedBytes += resource.size + (resource.derivedBytes ?? 0)
       delete this.index.resources[resourceId]
     }
     if (removedObjects > 0) await this.flush()
@@ -215,9 +225,41 @@ export class ResourceStore {
     if (total + incomingBytes > this.limits.maxBatchBytes) throw new Error(`batch exceeds ${this.limits.maxBatchBytes} bytes`)
   }
 
-  assertCacheQuota(incomingBytes) {
-    const total = Object.values(this.index.resources).reduce((sum, resource) => sum + resource.size, 0)
-    if (total + incomingBytes > this.limits.maxCacheBytes) throw new Error(`cache exceeds ${this.limits.maxCacheBytes} bytes`)
+  cacheBytes() {
+    return Object.values(this.index.resources)
+      .reduce((sum, resource) => sum + resource.size + (resource.derivedBytes ?? 0), 0)
+  }
+
+  async makeRoom(incomingBytes, excludedResourceId) {
+    let total = this.cacheBytes()
+    if (total + incomingBytes <= this.limits.maxCacheBytes) return
+    const candidates = Object.values(this.index.resources)
+      .filter(resource => resource.resourceId !== excludedResourceId && !this.hasPendingReference(resource.resourceId))
+      .sort((left, right) => left.lastAccess - right.lastAccess)
+    for (const resource of candidates) {
+      await this.purgeResource(resource.resourceId)
+      total -= resource.size + (resource.derivedBytes ?? 0)
+      if (total + incomingBytes <= this.limits.maxCacheBytes) return
+    }
+    throw new Error(`cache exceeds ${this.limits.maxCacheBytes} bytes`)
+  }
+
+  hasPendingReference(resourceId) {
+    return Object.values(this.index.sessions)
+      .some(bindings => bindings.some(binding => binding.resourceId === resourceId && binding.status === 'pending'))
+  }
+
+  async purgeResource(resourceId) {
+    const resource = this.index.resources[resourceId]
+    if (resource === undefined) return
+    await rm(join(this.root, resource.objectRelative), { force: true })
+    if (resource.derivedRelative !== null) await rm(join(this.root, resource.derivedRelative), { force: true })
+    for (const [sessionId, bindings] of Object.entries(this.index.sessions)) {
+      const next = bindings.filter(binding => binding.resourceId !== resourceId)
+      if (next.length === 0) delete this.index.sessions[sessionId]
+      else this.index.sessions[sessionId] = next
+    }
+    delete this.index.resources[resourceId]
   }
 
   isReferenced(resourceId) {
