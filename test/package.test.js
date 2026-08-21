@@ -12,4 +12,7 @@ test('package exposes both DSH faces and its bundle patch', async () => {
   assert.equal(manifest.exports['./client'], './lib/client.js')
   assert.equal(manifest.dsh.bundle.patch, './cordis.patch.yml')
   assert.match(patch, /name: dsh-file-upload/)
+  assert.equal(manifest.dependencies.officeparser, '7.8.0')
+  assert.equal(manifest.overrides['pdfjs-dist'], '6.2.108')
+  assert.equal(manifest.engines.node, '^22.19.0 || >=24.0.0')
 })
