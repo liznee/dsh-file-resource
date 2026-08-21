@@ -70,3 +70,29 @@ test('route does not leak stack traces or local paths in error responses', async
   assert.equal(res.statusCode, 400)
   assert.deepEqual(res.json(), { ok: false, error: 'The file could not be processed.' })
 })
+
+test('aborting the browser request cancels the parser signal', async () => {
+  let observedSignal
+  let release
+  const route = createResourceRoute({
+    upload: async input => {
+      observedSignal = input.signal
+      await new Promise(resolve => { release = resolve })
+      return { resourceId: 'res_123', status: 'ready' }
+    },
+  })
+  const req = request(Buffer.from('hello'), {
+    'content-length': '5',
+    'x-dsh-operation': 'upload',
+    'x-dsh-session': 'session-a',
+    'x-dsh-file-name': encodeURIComponent('notes.txt'),
+    'x-dsh-media-type': 'text/plain',
+  })
+  const res = response()
+  const pending = route.handler(req, res)
+  while (observedSignal === undefined) await new Promise(resolve => setTimeout(resolve, 0))
+  req.emit('aborted')
+  assert.equal(observedSignal.aborted, true)
+  release()
+  await pending
+})
