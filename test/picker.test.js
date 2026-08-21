@@ -6,6 +6,7 @@ import {
   createFilePicker,
   dismissPickerOverlay,
   dispatchImagesAsDrop,
+  installAttachActivationBridge,
   installMenuLayerStyles,
   partitionSelectedFiles,
 } from '../src/picker.js'
@@ -186,6 +187,31 @@ test('prefers the native showPicker API when the browser exposes it', () => {
 
   assert.equal(shown, 1)
   assert.equal(env.input.clicks, 0)
+})
+
+test('opens the picker synchronously from the attach row pointer gesture', () => {
+  let listener
+  let opened = 0
+  let removed = 0
+  const option = { querySelector: () => ({ textContent: 'attach' }) }
+  const documentRef = {
+    addEventListener(type, value, capture) {
+      assert.equal(type, 'pointerdown')
+      assert.equal(capture, true)
+      listener = value
+    },
+    removeEventListener(type, value, capture) {
+      assert.equal(type, 'pointerdown')
+      assert.equal(value, listener)
+      assert.equal(capture, true)
+      removed += 1
+    },
+  }
+  const dispose = installAttachActivationBridge({ open: () => { opened += 1 } }, documentRef)
+  listener({ target: { closest: selector => selector === '[role="option"]' ? option : null } })
+  assert.equal(opened, 1)
+  dispose()
+  assert.equal(removed, 1)
 })
 
 test('releases a failed native activation so the user can retry', () => {
