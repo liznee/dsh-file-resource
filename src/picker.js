@@ -84,6 +84,17 @@ export function installMenuLayerStyles(documentRef = document) {
   return () => { style.remove() }
 }
 
+/** Preserve the trusted pointer gesture before Harness resolves popup options asynchronously. */
+export function installAttachActivationBridge(picker, documentRef = document) {
+  const onPointerDown = event => {
+    const option = event.target?.closest?.('[role="option"]')
+    const command = option?.querySelector?.('span')?.textContent?.trim()
+    if (command === 'attach') picker.open()
+  }
+  documentRef.addEventListener('pointerdown', onPointerDown, true)
+  return () => { documentRef.removeEventListener('pointerdown', onPointerDown, true) }
+}
+
 /** Create one hidden native file input reused by every attach-menu activation. */
 export function createFilePicker({
   document: documentRef = document,

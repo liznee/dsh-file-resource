@@ -21,11 +21,14 @@ function dshHome() {
   return isAbsolute(configured) ? resolve(configured) : resolve(configured)
 }
 
-function emptyPluginMessage() {
+export function createFileOnlyMessage() {
   return Object.freeze({
     id: randomUUID(),
     role: 'user',
-    content: Object.freeze([]),
+    content: Object.freeze([Object.freeze({
+      type: 'text',
+      text: 'Read the newly attached files with read_uploaded_resource. Give the user a concise, useful summary with the key facts and concrete values. Do not ask them to restate the upload.',
+    })]),
     source: Object.freeze({ kind: 'plugin', plugin: name }),
   })
 }
@@ -50,7 +53,7 @@ export async function apply(ctx, config = {}) {
       if (resourceIds.some(resourceId => !attached.has(resourceId))) throw new Error('resource is not attached to this session')
       const agent = ctx.agents.get(sessionId)
       if (agent === undefined) throw new Error('session is not live')
-      agent.send(emptyPluginMessage(), 'next-turn', true)
+      agent.send(createFileOnlyMessage(), 'next-turn', true)
     }
 
     const disposers = [

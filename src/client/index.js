@@ -4,6 +4,7 @@ import {
   dismissPickerOverlay,
   dispatchDocumentSelection,
   dispatchImagesAsDrop,
+  installAttachActivationBridge,
   installMenuLayerStyles,
   partitionSelectedFiles,
 } from '../picker.js'
@@ -40,19 +41,26 @@ function installFileDockStyles() {
   return () => { style.remove() }
 }
 
-/** Hide only the empty wake marker; file instructions live in the system prompt, not this row. */
+/** Resolve the surrounding Harness context row without depending on generated class names. */
+export function findWakeMarkerRow(source) {
+  const flowRow = source.closest?.('[data-chat-flow-kind="context"]')
+  if (flowRow !== null && flowRow !== undefined) return flowRow
+  let row = source.parentElement
+  for (let depth = 0; row !== null && depth < 6; depth += 1, row = row.parentElement) {
+    if (row.querySelector?.('[data-context-injection-body]') !== null) return row
+  }
+  return null
+}
+
+/** Hide the model-only file wake instruction from the visible conversation. */
 function installWakeMarkerFilter() {
   const hide = () => {
     for (const source of document.querySelectorAll('[data-context-source]')) {
       if (source.textContent?.trim() !== 'dsh-file-upload') continue
-      let row = source.parentElement
-      for (let depth = 0; row !== null && depth < 6; depth += 1, row = row.parentElement) {
-        if (row.querySelector?.('[data-context-injection-body]') !== null) {
-          row.hidden = true
-          row.dataset.dshFileWakeMarker = 'true'
-          break
-        }
-      }
+      const row = findWakeMarkerRow(source)
+      if (row === null) continue
+      row.hidden = true
+      row.dataset.dshFileWakeMarker = 'true'
     }
   }
   const observer = new MutationObserver(hide)
@@ -80,7 +88,9 @@ export function apply(ctx) {
       onSettled: () => { dismissPickerOverlay() },
     })
     const removeStyles = installMenuLayerStyles()
+    const removeActivationBridge = installAttachActivationBridge(picker)
     return () => {
+      removeActivationBridge()
       picker.dispose()
       removeStyles()
     }
