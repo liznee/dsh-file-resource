@@ -41,32 +41,30 @@ export const FILE_DOCK_STYLES = `
 @media (prefers-reduced-motion: reduce) { .dsh-file-resource-progress > i { transition: none; } }
 `
 
-/** Move the rendered dock into Harness's composer card without replacing its native image slot. */
+/** Mirror the dock into Harness's composer card without moving React-owned DOM. */
 export function placeDockInsideComposer(dock, documentRef = document) {
-  if (dock === null || dock === undefined) return () => {}
+  if (dock === null || dock === undefined) return { visible: dock, dispose: () => {} }
   const composer = documentRef.querySelector('[data-composer-card]')
   const scroll = composer?.querySelector?.('[data-input-scroll]')
-  const origin = dock.parentNode
   if (composer === null || composer === undefined || scroll === null || scroll === undefined
-    || origin === null || origin === undefined || origin === composer) return () => {}
+    || dock.parentNode === composer) return { visible: dock, dispose: () => {} }
 
-  const marker = documentRef.createComment('dsh-file-resource-dock')
-  origin.insertBefore(marker, dock)
-  composer.insertBefore(dock, scroll)
-  dock.dataset.composerAttachment = 'true'
+  const visible = dock.cloneNode(true)
+  dock.hidden = true
+  visible.hidden = false
+  visible.dataset.composerAttachment = 'true'
+  composer.insertBefore(visible, scroll)
 
-  return () => {
-    delete dock.dataset.composerAttachment
-    if (marker.parentNode !== null && marker.parentNode !== undefined) {
-      marker.parentNode.insertBefore(dock, marker)
-      marker.remove()
-    } else if (dock.parentNode === composer) {
-      composer.removeChild(dock)
-    }
+  return {
+    visible,
+    dispose() {
+      visible.remove()
+      dock.hidden = false
+    },
   }
 }
 
-/** Preserve remove/cancel behavior after the dock leaves React's delegated event root. */
+/** Preserve remove/cancel behavior on the composer mirror outside React's event root. */
 export function bindComposerDockActions(dock, lookupItem, onRemove) {
   const onClick = event => {
     const button = event.target?.closest?.('[data-file-resource-remove]')
@@ -275,17 +273,17 @@ export function FileResourceDock({ sessionId, input, t }) {
   React.useLayoutEffect(() => {
     if (items.length === 0 || typeof document === 'undefined') return undefined
     const dock = dockRef.current
-    const restore = placeDockInsideComposer(dock, document)
-    const unbind = dock?.dataset?.composerAttachment === 'true'
+    const mounted = placeDockInsideComposer(dock, document)
+    const unbind = mounted.visible !== dock
       ? bindComposerDockActions(
-          dock,
+          mounted.visible,
           localId => live.current.items.find(item => item.localId === localId),
           remove,
         )
       : () => {}
     return () => {
       unbind()
-      restore()
+      mounted.dispose()
     }
   }, [items.length > 0, remove, sessionId])
 
