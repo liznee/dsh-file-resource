@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../src/invariant.js"],
-  "sourcesContent": ["const PACKAGE_NAME = 'dsh-image-upload'\n\nexport const name = 'dsh-image-upload-invariant'\nexport const inject = ['invariants']\n\nexport function apply(ctx) {\n  return Promise.resolve(ctx.invariants.register(PACKAGE_NAME, () => {}))\n}\n"],
+  "sourcesContent": ["const PACKAGE_NAME = 'dsh-file-upload'\n\nexport const name = 'dsh-file-upload-invariant'\nexport const inject = ['invariants']\n\nexport function apply(ctx) {\n  return Promise.resolve(ctx.invariants.register(PACKAGE_NAME, () => {}))\n}\n"],
   "mappings": ";AAAA,IAAM,eAAe;AAEd,IAAM,OAAO;AACb,IAAM,SAAS,CAAC,YAAY;AAE5B,SAAS,MAAM,KAAK;AACzB,SAAO,QAAQ,QAAQ,IAAI,WAAW,SAAS,cAAc,MAAM;AAAA,EAAC,CAAC,CAAC;AACxE;",
   "names": []
 }

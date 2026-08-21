@@ -1,7 +1,7 @@
 {
-  "name": "dsh-image-upload",
+  "name": "dsh-file-upload",
   "version": "0.1.0",
-  "description": "Adds a native image file picker to the DeepSeek Harness plus menu.",
+  "description": "Private local file attachments for DeepSeek Harness with native images and bounded document reading.",
   "author": "liznee",
   "type": "module",
   "main": "lib/index.js",
@@ -47,7 +47,8 @@
     "deepseek-harness",
     "dsh",
     "dsh-plugin",
-    "image-upload",
+    "file-upload",
+    "document-parser",
     "file-picker"
   ],
   "dependencies": {

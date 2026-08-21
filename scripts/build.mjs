@@ -28,7 +28,7 @@ await Promise.all([
     platform: 'browser',
     sourcemap: true,
     banner: {
-      js: 'window.__ModuleLoader__.load({ id: "dsh-image-upload", factory: (require) => { var module = { exports: {} }; var exports = module.exports;',
+      js: 'window.__ModuleLoader__.load({ id: "dsh-file-upload", factory: (require) => { var module = { exports: {} }; var exports = module.exports;',
     },
     footer: {
       js: 'return module.exports; } });',

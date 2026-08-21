@@ -1,6 +1,6 @@
-const PACKAGE_NAME = 'dsh-image-upload'
+const PACKAGE_NAME = 'dsh-file-upload'
 
-export const name = 'dsh-image-upload-invariant'
+export const name = 'dsh-file-upload-invariant'
 export const inject = ['invariants']
 
 export function apply(ctx) {

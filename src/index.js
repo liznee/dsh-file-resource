@@ -1,14 +1,80 @@
+import { randomUUID } from 'node:crypto'
+import { homedir } from 'node:os'
+import { isAbsolute, join, resolve } from 'node:path'
+
+import { createResourceRoute } from './resource-route.js'
+import { ResourceService } from './resource-service.js'
+import { ResourceStore } from './resource-store.js'
+import { createReadResourceTool } from './resource-tool.js'
 import { ATTACH_COMMAND } from './shared.js'
 
-export const name = 'dsh-image-upload'
-export const inject = ['commands']
+export const name = 'dsh-file-upload'
+export const inject = ['commands', 'webServer', 'tools', 'systemPrompt', 'agents']
 
-const WEB_ONLY_MESSAGE = 'Open the Web + menu and choose “attach” to browse image files.'
+const WEB_ONLY_MESSAGE = 'Open the Web + menu and choose “attach” to browse files.'
 
-export function apply(ctx) {
-  ctx.effect(() => ctx.commands.register({
-    name: ATTACH_COMMAND,
-      description: '浏览图片文件（PNG、JPEG、WebP、GIF）',
-    handler: () => Promise.resolve({ kind: 'error', text: WEB_ONLY_MESSAGE }),
-  }), 'dsh-image-upload: attach command')
+function dshHome() {
+  const configured = String(process.env.DSH_HOME ?? '').trim()
+  if (configured === '') return join(homedir(), '.dsh')
+  if (configured === '~') return homedir()
+  if (configured.startsWith('~/') || configured.startsWith('~\\')) return resolve(homedir(), configured.slice(2))
+  return isAbsolute(configured) ? resolve(configured) : resolve(configured)
+}
+
+function emptyPluginMessage() {
+  return Object.freeze({
+    id: randomUUID(),
+    role: 'user',
+    content: Object.freeze([]),
+    source: Object.freeze({ kind: 'plugin', plugin: name }),
+  })
+}
+
+export async function apply(ctx, config = {}) {
+  await ctx.effect(async () => {
+    const storeOptions = {
+      root: config.resourceRoot ?? join(dshHome(), 'resources', 'dsh-file-upload', 'v1'),
+      ...config.maxFileBytes === undefined ? {} : { maxFileBytes: config.maxFileBytes },
+      ...config.maxBatchBytes === undefined ? {} : { maxBatchBytes: config.maxBatchBytes },
+      ...config.maxCacheBytes === undefined ? {} : { maxCacheBytes: config.maxCacheBytes },
+      ...config.maxFilesPerSession === undefined ? {} : { maxFilesPerSession: config.maxFilesPerSession },
+      ...config.unreferencedTtlMs === undefined ? {} : { unreferencedTtlMs: config.unreferencedTtlMs },
+    }
+    const store = new ResourceStore(storeOptions)
+    await store.open()
+    await store.collectGarbage()
+    const service = new ResourceService({ store })
+
+    const wake = async (sessionId, resourceIds) => {
+      const attached = new Set((await service.listAll(sessionId)).map(resource => resource.resourceId))
+      if (resourceIds.some(resourceId => !attached.has(resourceId))) throw new Error('resource is not attached to this session')
+      const agent = ctx.agents.get(sessionId)
+      if (agent === undefined) throw new Error('session is not live')
+      agent.send(emptyPluginMessage(), 'next-turn', true)
+    }
+
+    const disposers = [
+      ctx.commands.register({
+        name: ATTACH_COMMAND,
+        description: '浏览文件（图片、PDF、Word、Excel、PPT、文本）',
+        handler: () => Promise.resolve({ kind: 'error', text: WEB_ONLY_MESSAGE }),
+      }),
+      ctx.webServer.register(createResourceRoute(service, {
+        maxFileBytes: store.limits.maxFileBytes,
+        logger: ctx.logger,
+        wake,
+      })),
+      ctx.tools.register(createReadResourceTool(service)),
+      ctx.systemPrompt.section({
+        name: 'dsh-file-upload:resources',
+        order: 180,
+        text: ({ agent }) => agent === undefined ? '' : service.promptFor(agent.id),
+      }),
+    ]
+
+    return async () => {
+      for (const dispose of disposers.reverse()) await Promise.resolve(dispose?.())
+      await store.close()
+    }
+  }, 'dsh-file-upload: resource runtime')
 }

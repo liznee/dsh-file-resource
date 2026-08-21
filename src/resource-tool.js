@@ -3,13 +3,18 @@ export function createReadResourceTool(service) {
     name: 'read_uploaded_resource',
     description: 'Read a bounded chunk, page, slide, sheet, or search result from a file attached to this conversation.',
     parameters: {
-      resource_id: { type: 'string', required: true, description: 'Opaque resource ID exactly as listed in the attached-files context.' },
-      selector: { type: 'string', description: 'Optional selector: chunk:N, page:N, slide:N, sheet:NAME, search:TEXT, or summary.' },
-      offset: { type: 'integer', description: 'Character offset within the selected result. Defaults to 0.' },
-      limit: { type: 'integer', description: 'Maximum characters to return, from 1 to 24000. Defaults to 8000.' },
+      type: 'object',
+      additionalProperties: false,
+      required: ['resource_id'],
+      properties: {
+        resource_id: { type: 'string', description: 'Opaque resource ID exactly as listed in the attached-files context.' },
+        selector: { type: 'string', description: 'Optional selector: chunk:N, page:N, slide:N, sheet:NAME, search:TEXT, or summary.' },
+        offset: { type: 'integer', minimum: 0, description: 'Character offset within the selected result. Defaults to 0.' },
+        limit: { type: 'integer', minimum: 1, maximum: 24000, description: 'Maximum characters to return. Defaults to 8000.' },
+      },
     },
     output: {
-      schema: { type: 'json' },
+      schema: { type: 'object', additionalProperties: true },
       render: (_args, value) => [{
         type: 'text',
         text: [
