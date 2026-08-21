@@ -153,6 +153,23 @@ test('configures a reusable multi-image picker and settles selected files once',
   assert.equal(env.input.removed, true)
 })
 
+test('prefers the native showPicker API when the browser exposes it', () => {
+  const env = fakeEnvironment()
+  let shown = 0
+  env.input.showPicker = () => { shown += 1 }
+  const picker = createImagePicker({
+    document: env.documentRef,
+    window: env.windowRef,
+    onFiles: () => {},
+    onSettled: () => {},
+  })
+
+  picker.open()
+
+  assert.equal(shown, 1)
+  assert.equal(env.input.clicks, 0)
+})
+
 test('cancel settles the picker without dispatching files', () => {
   const env = fakeEnvironment()
   let selected = 0
