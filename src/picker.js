@@ -3,8 +3,19 @@ export const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
 const STYLE_ID = 'dsh-image-upload'
 const MENU_LAYER_STYLES = `
 #dsh-slash-option-command-0 {
-  box-shadow: 0 5px 0 -4px var(--dsw-alias-border-l2-darkmode-thin);
-  margin-bottom: 8px;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+#dsh-slash-option-command-0::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -5px;
+  left: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
 }
 `
 
