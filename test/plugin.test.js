@@ -10,6 +10,9 @@ import {
 
 test('host half registers an alphabetically leading attach command', async () => {
   let definition
+  let route
+  let tool
+  let section
   const ctx = {
     commands: {
       register(value) {
@@ -17,19 +20,32 @@ test('host half registers an alphabetically leading attach command', async () =>
         return () => {}
       },
     },
-    effect(install) { return install() },
+    webServer: { register(value) { route = value; return () => {} } },
+    tools: { register(value) { tool = value; return () => {} } },
+    systemPrompt: { section(value) { section = value; return () => {} } },
+    agents: { get() { return undefined } },
+    logger: { warn() {} },
+    async effect(install) { return install() },
   }
 
-  applyHost(ctx)
+  const root = await import('node:fs/promises').then(({ mkdtemp }) => mkdtemp(`${process.cwd()}\\test-host-`))
+  try {
+    await applyHost(ctx, { resourceRoot: root })
 
-  assert.equal(name, 'dsh-image-upload')
-  assert.deepEqual(hostInject, ['commands'])
-  assert.equal(definition.name, ATTACH_COMMAND)
-  assert.match(definition.description, /浏览图片文件/)
-  assert.deepEqual(await definition.handler({ rawInput: '' }), {
-    kind: 'error',
-    text: 'Open the Web + menu and choose “attach” to browse image files.',
-  })
+    assert.equal(name, 'dsh-file-upload')
+    assert.deepEqual(hostInject, ['commands', 'webServer', 'tools', 'systemPrompt', 'agents'])
+    assert.equal(definition.name, ATTACH_COMMAND)
+    assert.match(definition.description, /浏览文件/)
+    assert.equal(route.path, '/dsh-file-upload/v1')
+    assert.equal(tool.name, 'read_uploaded_resource')
+    assert.equal(section.name, 'dsh-file-upload:resources')
+    assert.deepEqual(await definition.handler({ rawInput: '' }), {
+      kind: 'error',
+      text: 'Open the Web + menu and choose “attach” to browse files.',
+    })
+  } finally {
+    await import('node:fs/promises').then(({ rm }) => rm(root, { recursive: true, force: true }))
+  }
 })
 
 test('client decoration opens the native picker from the existing command row', async () => {
