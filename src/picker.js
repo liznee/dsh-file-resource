@@ -1,6 +1,16 @@
-export const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
+export const FILE_ACCEPT = [
+  'image/png', 'image/jpeg', 'image/webp', 'image/gif',
+  '.pdf', '.docx', '.xlsx', '.pptx', '.odt', '.ods', '.odp', '.rtf', '.epub',
+  '.txt', '.md', '.markdown', '.csv', '.tsv', '.json', '.jsonl', '.xml', '.html', '.htm',
+  '.yaml', '.yml', '.log', '.ini', '.toml', '.sql',
+  '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.c', '.h', '.cpp', '.hpp', '.cs', '.go', '.rs',
+  '.rb', '.php', '.sh', '.ps1', '.bat', '.css', '.scss',
+].join(',')
 
-const STYLE_ID = 'dsh-image-upload'
+const NATIVE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+const NATIVE_IMAGE_EXTENSION = /\.(?:png|jpe?g|webp|gif)$/iu
+
+const STYLE_ID = 'dsh-file-upload'
 const MENU_LAYER_STYLES = `
 #dsh-slash-option-command-0 {
   position: relative;
@@ -32,6 +42,26 @@ export function dispatchImagesAsDrop(files, environment = globalThis) {
   return environment.document.dispatchEvent(event)
 }
 
+export function partitionSelectedFiles(files) {
+  const images = []
+  const documents = []
+  for (const file of files) {
+    if (NATIVE_IMAGE_TYPES.has(String(file.type).toLowerCase())
+      || (String(file.type) === '' && NATIVE_IMAGE_EXTENSION.test(String(file.name)))) images.push(file)
+    else documents.push(file)
+  }
+  return { images, documents }
+}
+
+export function dispatchDocumentSelection(files, environment = globalThis) {
+  if (files.length === 0) return false
+  return environment.document.dispatchEvent(new environment.CustomEvent('dsh-file-upload:selected', {
+    bubbles: false,
+    cancelable: false,
+    detail: { files: [...files] },
+  }))
+}
+
 /** Close the transient empty command popup and return focus to the composer. */
 export function dismissPickerOverlay(environment = globalThis) {
   const event = new environment.PointerEvent('pointerdown', {
@@ -55,7 +85,7 @@ export function installMenuLayerStyles(documentRef = document) {
 }
 
 /** Create one hidden native file input reused by every attach-menu activation. */
-export function createImagePicker({
+export function createFilePicker({
   document: documentRef = document,
   window: windowRef = window,
   onFiles,
@@ -63,7 +93,7 @@ export function createImagePicker({
 }) {
   const input = documentRef.createElement('input')
   input.type = 'file'
-  input.accept = IMAGE_ACCEPT
+  input.accept = FILE_ACCEPT
   input.multiple = true
   input.hidden = true
   input.tabIndex = -1
@@ -117,3 +147,5 @@ export function createImagePicker({
     },
   }
 }
+
+export const createImagePicker = createFilePicker

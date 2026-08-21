@@ -8,6 +8,7 @@ await Promise.all([
     entryPoints: ['src/index.js'],
     outfile: 'lib/index.js',
     bundle: true,
+    external: ['officeparser'],
     format: 'esm',
     platform: 'node',
     sourcemap: true,
@@ -26,6 +27,7 @@ await Promise.all([
     bundle: true,
     format: 'cjs',
     platform: 'browser',
+    external: ['react'],
     sourcemap: true,
     banner: {
       js: 'window.__ModuleLoader__.load({ id: "dsh-file-upload", factory: (require) => { var module = { exports: {} }; var exports = module.exports;',

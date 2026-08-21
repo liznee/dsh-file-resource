@@ -1,13 +1,18 @@
 import { ATTACH_COMMAND } from '../shared.js'
 import {
-  createImagePicker,
+  createFilePicker,
   dismissPickerOverlay,
+  dispatchDocumentSelection,
   dispatchImagesAsDrop,
   installMenuLayerStyles,
+  partitionSelectedFiles,
 } from '../picker.js'
+import { en, FILE_DOCK_STYLES, FileResourceDock, zh } from './file-dock.js'
+
+const NS = 'file-upload'
 
 export { ATTACH_COMMAND }
-export const inject = ['commandUi']
+export const inject = ['commandUi', 'slots', 'locale']
 
 export function createAttachDecoration(picker) {
   return {
@@ -24,14 +29,54 @@ export function createAttachDecoration(picker) {
   }
 }
 
+function installFileDockStyles() {
+  const existing = document.querySelector('style[data-plugin-css="dsh-file-upload-dock"]')
+  if (existing !== null) return () => {}
+  const style = document.createElement('style')
+  style.dataset.plugin = 'dsh-file-upload'
+  style.dataset.pluginCss = 'dsh-file-upload-dock'
+  style.textContent = FILE_DOCK_STYLES
+  document.head.append(style)
+  return () => { style.remove() }
+}
+
+/** Hide only the empty wake marker; file instructions live in the system prompt, not this row. */
+function installWakeMarkerFilter() {
+  const hide = () => {
+    for (const source of document.querySelectorAll('[data-context-source]')) {
+      if (source.textContent?.trim() !== 'dsh-file-upload') continue
+      let row = source.parentElement
+      for (let depth = 0; row !== null && depth < 6; depth += 1, row = row.parentElement) {
+        if (row.querySelector?.('[data-context-injection-body]') !== null) {
+          row.hidden = true
+          row.dataset.dshFileWakeMarker = 'true'
+          break
+        }
+      }
+    }
+  }
+  const observer = new MutationObserver(hide)
+  observer.observe(document.body, { childList: true, subtree: true })
+  hide()
+  return () => { observer.disconnect() }
+}
+
 export function apply(ctx) {
   const commandUi = ctx.get('commandUi')
   if (commandUi === undefined) throw new Error('dsh-image-upload: commandUi service unavailable')
 
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-file-upload: dictionaries')
+  ctx.effect(installFileDockStyles, 'dsh-file-upload: file dock styles')
+  ctx.effect(installWakeMarkerFilter, 'dsh-file-upload: empty wake marker filter')
+
   let picker
   ctx.effect(() => {
-    picker = createImagePicker({
-      onFiles: files => { dispatchImagesAsDrop(files) },
+    picker = createFilePicker({
+      onFiles: files => {
+        const { images, documents } = partitionSelectedFiles(files)
+        if (images.length > 0) dispatchImagesAsDrop(images)
+        if (documents.length > 0) dispatchDocumentSelection(documents)
+      },
       onSettled: () => { dismissPickerOverlay() },
     })
     const removeStyles = installMenuLayerStyles()
@@ -39,9 +84,16 @@ export function apply(ctx) {
       picker.dispose()
       removeStyles()
     }
-  }, 'dsh-image-upload: native picker')
+  }, 'dsh-file-upload: native picker')
 
   ctx.effect(() => commandUi.decorate(createAttachDecoration({
     open: () => { picker?.open() },
-  })), 'dsh-image-upload: attach command decoration')
+  })), 'dsh-file-upload: attach command decoration')
+
+  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
+    name: 'conversation.input.dock',
+    id: 'file-upload-resources',
+    order: -10,
+    locale: NS,
+  }, FileResourceDock))
 }

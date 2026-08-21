@@ -1,6 +1,7 @@
 import { validateBrowserRequest, validateResourceId, validateSessionId } from './resource-security.js'
+import { RESOURCE_ENDPOINT } from './shared.js'
 
-export const RESOURCE_ENDPOINT = '/dsh-file-upload/v1'
+export { RESOURCE_ENDPOINT }
 
 class RequestTooLargeError extends Error {}
 
@@ -56,6 +57,9 @@ export function createResourceRoute(service, {
         send(response, 403, { ok: false, error: 'Forbidden.' })
         return
       }
+      const controller = new AbortController()
+      const onAborted = () => { controller.abort() }
+      request.once?.('aborted', onAborted)
       try {
         const operation = header(request, 'x-dsh-operation')
         const declaredLength = Number.parseInt(String(header(request, 'content-length') ?? ''), 10)
@@ -70,6 +74,7 @@ export function createResourceRoute(service, {
             fileName: decodeHeader(header(request, 'x-dsh-file-name'), 'file name'),
             mediaType: decodeHeader(header(request, 'x-dsh-media-type') ?? encodeURIComponent('application/octet-stream'), 'media type'),
             bytes,
+            signal: controller.signal,
           })
           send(response, 200, { ok: true, resource })
           return
@@ -103,6 +108,8 @@ export function createResourceRoute(service, {
         }
         logger.warn?.(`dsh-file-upload request failed: ${error instanceof Error ? error.message : String(error)}`)
         send(response, 400, { ok: false, error: 'The file could not be processed.' })
+      } finally {
+        request.off?.('aborted', onAborted)
       }
     },
   }
