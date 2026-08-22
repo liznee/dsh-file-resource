@@ -43,10 +43,9 @@ dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.0
 
 安装后运行 `dsh --profile web --dump-config`，输出中应出现 `# == dsh-file-resource`。随后重启 `dsh web`，从输入框左下角的 `+` 选择 `attach`。
 
-更新或卸载：
+升级时，将上述安装命令中的 `0.1.0` 替换为准备安装的新版本。卸载命令：
 
 ```powershell
-dsh plugin --profile web update dsh-file-resource
 dsh plugin --profile web remove dsh-file-resource
 ```
 
