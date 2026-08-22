@@ -33,3 +33,16 @@ test('builds compact prompt context without including document contents', () => 
   assert.doesNotMatch(prompt, /document contents/i)
   assert.equal(prompt.length < 500, true)
 })
+
+test('attachment context keeps response language anchored to the preceding human message', () => {
+  const prompt = resourcePrompt([{
+    resourceId: 'res_deadbeef', fileName: 'english-report.docx', kind: 'docx', size: 12345, unitCount: 4,
+  }])
+
+  assert.match(prompt, /most recent human-authored natural-language message/iu)
+  assert.match(prompt, /all assistant-visible natural-language text/iu)
+  assert.match(prompt, /reasoning\/thinking summaries/iu)
+  assert.match(prompt, /ignore.*attachment metadata or contents.*tool text\/errors/isu)
+  assert.match(prompt, /no prior human text.*attachment's dominant language.*Simplified Chinese/isu)
+  assert.equal(prompt.length < 1_000, true)
+})

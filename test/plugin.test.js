@@ -17,6 +17,16 @@ test('file-only wake gives the model a concrete hidden instruction', () => {
   assert.match(message.content[0].text, /key facts/iu)
 })
 
+test('file-only wake preserves the language of the preceding human message', () => {
+  const text = createFileOnlyMessage().content[0].text
+
+  assert.match(text, /most recent human-authored natural-language message/iu)
+  assert.match(text, /all assistant-visible natural-language text/iu)
+  assert.match(text, /reasoning\/thinking summaries/iu)
+  assert.match(text, /ignore.*plugin messages.*tool text\/errors/isu)
+  assert.match(text, /no prior human text.*attachment's dominant language.*Simplified Chinese/isu)
+})
+
 test('locates the complete Harness context row for the hidden wake marker', () => {
   const row = { hidden: false }
   const source = {
