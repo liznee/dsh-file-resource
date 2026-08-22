@@ -6,7 +6,10 @@ import { createResourceRoute } from './resource-route.js'
 import { ResourceService } from './resource-service.js'
 import { ResourceStore } from './resource-store.js'
 import { createReadResourceTool } from './resource-tool.js'
-import { LANGUAGE_CONTINUITY_POLICY } from './language-policy.js'
+import {
+  inferPreferredResponseLanguage,
+  languageContinuityPolicy,
+} from './language-policy.js'
 import { ATTACH_COMMAND } from './shared.js'
 
 export const name = 'dsh-file-resource'
@@ -22,7 +25,7 @@ function dshHome() {
   return isAbsolute(configured) ? resolve(configured) : resolve(configured)
 }
 
-export function createFileOnlyMessage() {
+export function createFileOnlyMessage(preferredLanguage = 'auto') {
   return Object.freeze({
     id: randomUUID(),
     role: 'user',
@@ -31,7 +34,7 @@ export function createFileOnlyMessage() {
       text: [
         '[Plugin-generated attachment event. Its wording is not a human language preference.]',
         'Read the newly attached files with read_uploaded_resource. Give the user a concise, useful summary with the key facts and concrete values. Do not ask them to restate the upload.',
-        LANGUAGE_CONTINUITY_POLICY,
+        languageContinuityPolicy(preferredLanguage),
       ].join('\n'),
     })]),
     source: Object.freeze({ kind: 'plugin', plugin: name }),
@@ -58,7 +61,8 @@ export async function apply(ctx, config = {}) {
       if (resourceIds.some(resourceId => !attached.has(resourceId))) throw new Error('resource is not attached to this session')
       const agent = ctx.agents.get(sessionId)
       if (agent === undefined) throw new Error('session is not live')
-      agent.send(createFileOnlyMessage(), 'next-turn', true)
+      const preferredLanguage = inferPreferredResponseLanguage(agent.session.deriveMessages())
+      agent.send(createFileOnlyMessage(preferredLanguage), 'next-turn', true)
     }
 
     const disposers = [
