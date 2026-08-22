@@ -3,6 +3,8 @@
 [![CI](https://github.com/liznee/dsh-file-resource/actions/workflows/ci.yml/badge.svg)](https://github.com/liznee/dsh-file-resource/actions/workflows/ci.yml)
 
 DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜单顶部增加 `attach`，并用分隔线与 Harness 原生命令区分；不会再增加一个单独按钮。
+
+
 <img width="496" height="320" alt="image" src="https://github.com/user-attachments/assets/c1d4a1d3-7193-4599-b80f-50b3e74d815c" />
 
 
