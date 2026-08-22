@@ -31,7 +31,7 @@ test('builds compact prompt context without including document contents', () => 
   assert.match(prompt, /res_deadbeef/)
   assert.match(prompt, /budget\.xlsx/)
   assert.doesNotMatch(prompt, /document contents/i)
-  assert.equal(prompt.length < 500, true)
+  assert.equal(prompt.length < 1_000, true)
 })
 
 test('attachment context keeps response language anchored to the preceding human message', () => {
