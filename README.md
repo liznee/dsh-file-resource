@@ -6,7 +6,8 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 
 
 <img width="496" height="320" alt="image" src="https://github.com/user-attachments/assets/c1d4a1d3-7193-4599-b80f-50b3e74d815c" />
-<img width="780" height="240" alt="image" src="https://github.com/user-attachments/assets/5782a7bd-e0e9-46d2-9145-889836328795" />
+<img width="780" height="240" alt="image" src="https://github.com/user-attachments/assets/f2ad5e56-3853-4049-b5c0-dff53eee6e05" />
+
 
 
 选择图片时继续使用 Harness 官方图片附件流程。选择文档时，插件在本机解析并保存为会话隔离的私有资源，模型只在需要时通过一个受限读取工具按页、幻灯片、工作表、分块或搜索结果读取。界面不会伪造或显示“请读取某个文件”的用户消息。
