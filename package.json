@@ -28,7 +28,9 @@
     "src/**/*.js",
     "scripts/build.mjs",
     "cordis.patch.yml",
+    "CHANGELOG.md",
     "README.md",
+    "SECURITY.md",
     "LICENSE"
   ],
   "dsh": {

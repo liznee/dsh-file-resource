@@ -1,5 +1,7 @@
 # dsh-file-resource
 
+[![CI](https://github.com/liznee/dsh-file-resource/actions/workflows/ci.yml/badge.svg)](https://github.com/liznee/dsh-file-resource/actions/workflows/ci.yml)
+
 DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜单顶部增加 `attach`，并用分隔线与 Harness 原生命令区分；不会再增加一个单独按钮。
 
 选择图片时继续使用 Harness 官方图片附件流程。选择文档时，插件在本机解析并保存为会话隔离的私有资源，模型只在需要时通过一个受限读取工具按页、幻灯片、工作表、分块或搜索结果读取。界面不会伪造或显示“请读取某个文件”的用户消息。
@@ -25,13 +27,28 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 
 ## 安装
 
-要求与当前 DeepSeek Harness 一致：Node.js `22.19+` 或 `24+`。
+要求与当前 DeepSeek Harness 一致：Node.js `22.19+` 或 `24+`。`v0.1.0` 已在 DeepSeek Harness `0.1.1-rc.1` 上验证。
+
+从 npm 安装固定版本：
 
 ```powershell
-dsh plugin --profile web add dsh-file-resource
+dsh plugin --profile web add dsh-file-resource@0.1.0
 ```
 
-重启 `dsh web` 后，从输入框左下角的 `+` 选择 `attach`。
+也可以直接安装对应的 GitHub Release：
+
+```powershell
+dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.0
+```
+
+安装后运行 `dsh --profile web --dump-config`，输出中应出现 `# == dsh-file-resource`。随后重启 `dsh web`，从输入框左下角的 `+` 选择 `attach`。
+
+更新或卸载：
+
+```powershell
+dsh plugin --profile web update dsh-file-resource
+dsh plugin --profile web remove dsh-file-resource
+```
 
 本地开发安装：
 
@@ -67,6 +84,8 @@ dsh plugin --profile web add C:\absolute\path\to\dsh-file-resource
 - 文件内容中的指令一律被提示为不可信数据。
 - 插件不包含统计、遥测或第三方上传。只有用户发送消息后，所选模型提供方才会按正常 Harness 流程收到模型实际读取的内容。
 
+安全问题请按照 [SECURITY.md](SECURITY.md) 私下报告；不要在公开 Issue 中披露可利用细节。
+
 ## 验证
 
 ```powershell
@@ -87,7 +106,8 @@ Supported documents: PDF, DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, EPUB, plus commo
 Install with:
 
 ```powershell
-dsh plugin --profile web add dsh-file-resource
+dsh plugin --profile web add dsh-file-resource@0.1.0
+# or: dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.0
 ```
 
 The plugin has no telemetry or third-party file upload. See the Chinese sections above for cache limits, token estimates, security controls, and performance measurements.
