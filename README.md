@@ -2,7 +2,8 @@
 
 [![CI](https://github.com/liznee/dsh-file-resource/actions/workflows/ci.yml/badge.svg)](https://github.com/liznee/dsh-file-resource/actions/workflows/ci.yml)
 
-DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜单顶部增加 `attach`，并用分隔线与 Harness 原生命令区分；不会再增加一个单独按钮。<img width="496" height="320" alt="image" src="https://github.com/user-attachments/assets/c1d4a1d3-7193-4599-b80f-50b3e74d815c" />
+DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜单顶部增加 `attach`，并用分隔线与 Harness 原生命令区分；不会再增加一个单独按钮。
+<img width="496" height="320" alt="image" src="https://github.com/user-attachments/assets/c1d4a1d3-7193-4599-b80f-50b3e74d815c" />
 
 
 选择图片时继续使用 Harness 官方图片附件流程。选择文档时，插件在本机解析并保存为会话隔离的私有资源，模型只在需要时通过一个受限读取工具按页、幻灯片、工作表、分块或搜索结果读取。界面不会伪造或显示“请读取某个文件”的用户消息。
