@@ -10,10 +10,29 @@ import {
   bindComposerDockActions,
   en,
   placeDockInsideComposer,
+  reactDisabledFromInput,
   zh,
 } from '../src/client/file-dock.js'
 
 const t = key => zh[key] ?? key
+
+test('reactDisabledFromInput mirrors the official empty || machineBusy semantics', () => {
+  // 空草稿、无附件 → 禁用
+  assert.equal(reactDisabledFromInput({ phase: 'plain', draft: '', imageIds: [] }), true)
+  // 打字后 → 启用（修复的核心场景）
+  assert.equal(reactDisabledFromInput({ phase: 'plain', draft: 'review this', imageIds: [] }), false)
+  // 忙阶段（与官方 machineBusy 完全一致的枚举，不含其他相位）
+  assert.equal(reactDisabledFromInput({ phase: 'adjudicating', draft: 'review this', imageIds: [] }), true)
+  assert.equal(reactDisabledFromInput({ phase: 'submitting', draft: 'review this', imageIds: [] }), true)
+  // claimed 相位官方不禁用：草稿非空时保持启用
+  assert.equal(reactDisabledFromInput({ phase: 'claimed', draft: '/goal x', imageIds: [] }), false)
+  // 官方图片附件存在时官方不禁用（attachments 非空）
+  assert.equal(reactDisabledFromInput({ phase: 'plain', draft: '', imageIds: ['img-1'] }), false)
+  // 缺省/畸形状态按禁用处理，且不抛异常
+  assert.equal(reactDisabledFromInput(undefined), true)
+  assert.equal(reactDisabledFromInput(null), true)
+  assert.equal(reactDisabledFromInput({ phase: 'plain', draft: '' }), true)
+})
 
 test('renders a compact processing card with real progress and a circular cancel control', () => {
   const renderer = TestRenderer.create(React.createElement(ResourceCard, {

@@ -71,9 +71,91 @@ test('file-only binding enables the resident send button and owns only eligible 
   button.dispatchEvent(new Event('click', { cancelable: true }))
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.equal(sent, 1)
-  binding.update({ eligible: false, busy: false })
+  binding.update({ eligible: false, busy: false, reactDisabled: true })
   assert.equal(button.dataset.dshFileResourceSend, undefined)
   binding.dispose()
+})
+
+test('never disables a button it did not enable (React owns the disabled attribute)', () => {
+  const button = new FakeButton()
+  button.disabled = false
+  const binding = bindFileOnlySendButton(button, { onSend: async () => {} })
+  binding.update({ eligible: false, busy: false, reactDisabled: false })
+  assert.equal(button.disabled, false)
+  binding.update({ eligible: false, busy: false, reactDisabled: true })
+  assert.equal(button.disabled, false)
+  binding.dispose()
+})
+
+test('releases an owned button without touching disabled when the user types', () => {
+  const button = new FakeButton()
+  const binding = bindFileOnlySendButton(button, { onSend: async () => {} })
+  binding.update({ eligible: true, busy: false })
+  assert.equal(button.disabled, false)
+
+  // 用户打字：React 自己启用按钮（reactDisabled=false），插件必须放手且不改 DOM
+  binding.update({ eligible: false, busy: false, reactDisabled: false })
+  assert.equal(button.disabled, false)
+  assert.equal(button.dataset.dshFileResourceSend, undefined)
+  binding.dispose()
+})
+
+test('restores a still-owned button when files vanish and the draft stays empty', () => {
+  const button = new FakeButton()
+  const binding = bindFileOnlySendButton(button, { onSend: async () => {} })
+  binding.update({ eligible: true, busy: false })
+  assert.equal(button.disabled, false)
+
+  // 文件被删光、草稿仍空：React 语义为禁用（空草稿），插件恢复自己劫持过的按钮
+  binding.update({ eligible: false, busy: false, reactDisabled: true })
+  assert.equal(button.disabled, true)
+  assert.equal(button.dataset.dshFileResourceSend, undefined)
+  binding.dispose()
+})
+
+test('click flight uses inert instead of mutating the disabled attribute', async () => {
+  const button = new FakeButton()
+  let release
+  const gate = new Promise(resolve => { release = resolve })
+  const binding = bindFileOnlySendButton(button, { onSend: () => gate })
+  binding.update({ eligible: true, busy: false })
+  assert.equal(button.disabled, false)
+
+  button.dispatchEvent(new Event('click', { cancelable: true }))
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.equal(button.inert, true)
+  assert.equal(button.disabled, false)
+  assert.equal(button.dataset.dshFileResourceSendBusy, 'true')
+
+  release()
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.equal(button.inert, false)
+  assert.equal(button.disabled, false)
+  assert.equal(button.dataset.dshFileResourceSendBusy, undefined)
+  binding.dispose()
+})
+
+test('recovers busy and inert even when onSend throws synchronously', async () => {
+  const button = new FakeButton()
+  const binding = bindFileOnlySendButton(button, { onSend: () => { throw new Error('wake failed') } })
+  binding.update({ eligible: true, busy: false })
+
+  button.dispatchEvent(new Event('click', { cancelable: true }))
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.equal(button.inert, false)
+  assert.equal(button.dataset.dshFileResourceSendBusy, undefined)
+  binding.dispose()
+})
+
+test('dispose never mutates the disabled attribute', () => {
+  const button = new FakeButton()
+  const binding = bindFileOnlySendButton(button, { onSend: async () => {} })
+  binding.update({ eligible: true, busy: false })
+  assert.equal(button.disabled, false)
+  button.disabled = false
+  binding.dispose()
+  assert.equal(button.disabled, false)
+  assert.equal(button.dataset.dshFileResourceSend, undefined)
 })
 
 test('commits document cards only after a successful Harness submission', () => {
