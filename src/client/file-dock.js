@@ -25,6 +25,17 @@ export const en = {
   sendFailed: 'The files could not be sent; try again',
 }
 
+/**
+ * React 语义下官方发送按钮应为禁用的条件（官方 empty || machineBusy 的镜像）。
+ * 插件只在 React 本身想要禁用时才恢复自己劫持过的按钮，因此必须与官方逐项一致：
+ * 忙阶段只有 adjudicating / submitting，其余相位只由「空草稿且无官方附件」决定。
+ */
+export function reactDisabledFromInput(state) {
+  if (state === null || state === undefined) return true
+  if (state.phase === 'adjudicating' || state.phase === 'submitting') return true
+  return String(state?.draft ?? '').trim() === '' && (state.imageIds?.length ?? 0) === 0
+}
+
 export const FILE_DOCK_STYLES = `
 .dsh-file-resource-dock { box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; max-width: 100%; padding: 4px 12px 2px; width: 100%; }
 .dsh-file-resource-dock[hidden] { display: none; }
@@ -39,6 +50,8 @@ export const FILE_DOCK_STYLES = `
 .dsh-file-resource-cancel { align-items: center; background: rgba(127,127,127,.20); border: 0; border-radius: 999px; color: var(--dsw-alias-label-secondary); cursor: pointer; display: inline-flex; height: 28px; justify-content: center; padding: 0; width: 28px; }
 .dsh-file-resource-cancel:hover { background: rgba(127,127,127,.30); color: var(--dsw-alias-label-primary); }
 .dsh-file-resource-cancel:focus-visible { outline: 2px solid var(--dsw-alias-state-focus-primary, currentColor); outline-offset: 2px; }
+/* 仅文件发送（wake）飞行中的视觉反馈：不触碰 React 拥有的 disabled 属性 */
+[data-dsh-file-resource-send-busy] { cursor: default; opacity: .55; }
 @media (prefers-reduced-motion: reduce) { .dsh-file-resource-progress > i { transition: none; } }
 `
 
@@ -269,6 +282,7 @@ export function FileResourceDock({ sessionId, input, t }) {
         eligible: live.current.items.some(item => item.status === 'ready')
           && state?.phase === 'plain' && String(state?.draft ?? '').trim() === '',
         busy: state?.phase === 'adjudicating' || state?.phase === 'submitting',
+        reactDisabled: reactDisabledFromInput(state),
       })
     }
     syncButton.current = sync
