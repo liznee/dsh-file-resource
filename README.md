@@ -33,23 +33,23 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 
 ## 安装
 
-要求与当前 DeepSeek Harness 一致：Node.js `22.19+` 或 `24+`。`v0.1.0` 已在 DeepSeek Harness `0.1.1-rc.1` 上验证。
+要求与当前 DeepSeek Harness 一致：Node.js `22.19+` 或 `24+`。`v0.1.1` 已在 DeepSeek Harness `0.1.1-rc.1` 上验证。
 
 从 npm 安装固定版本：
 
 ```powershell
-dsh plugin --profile web add dsh-file-resource@0.1.0
+dsh plugin --profile web add dsh-file-resource@0.1.1
 ```
 
 也可以直接安装对应的 GitHub Release：
 
 ```powershell
-dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.0
+dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.1
 ```
 
 安装后运行 `dsh --profile web --dump-config`，输出中应出现 `# == dsh-file-resource`。随后重启 `dsh web`，从输入框左下角的 `+` 选择 `attach`。
 
-升级时，将上述安装命令中的 `0.1.0` 替换为准备安装的新版本。卸载命令：
+升级时，将上述安装命令中的 `0.1.1` 替换为准备安装的新版本。卸载命令：
 
 ```powershell
 dsh plugin --profile web remove dsh-file-resource
@@ -111,8 +111,8 @@ Supported documents: PDF, DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, EPUB, plus commo
 Install with:
 
 ```powershell
-dsh plugin --profile web add dsh-file-resource@0.1.0
-# or: dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.0
+dsh plugin --profile web add dsh-file-resource@0.1.1
+# or: dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.1
 ```
 
 The plugin has no telemetry or third-party file upload. See the Chinese sections above for cache limits, token estimates, security controls, and performance measurements.
