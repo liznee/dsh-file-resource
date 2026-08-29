@@ -71,13 +71,25 @@ export class ResourceService {
     const want = normalizeFileName(fileName)
     const resources = await this.store.listSession(sessionId)
     const match = resources.find(resource => normalizeFileName(resource.fileName) === want)
-    if (match === undefined) throw new Error('no attached file with that name in this session')
-    const derived = await this.store.readDerivedForSession(sessionId, match.resourceId)
+    if (match !== undefined) {
+      const derived = await this.store.readDerivedForSession(sessionId, match.resourceId)
+      return this.previewFrom(derived, match)
+    }
+    // The pending attachment may have been removed after sending, but the
+    // conversation's send history still authorizes a preview of this file.
+    const mention = (await this.store.listMentions(sessionId))
+      .find(entry => normalizeFileName(entry.fileName) === want)
+    if (mention === undefined) throw new Error('no attached file with that name in this session')
+    const derived = await this.store.readDerivedForResource(mention.resourceId)
+    return this.previewFrom(derived, mention)
+  }
+
+  previewFrom(derived, record) {
     const selection = readSelection(derived, { selector: 'summary', limit: 12_000 })
     return {
-      fileName: match.fileName,
-      kind: match.kind,
-      size: match.size,
+      fileName: record.fileName,
+      kind: record.kind ?? derived.kind,
+      size: record.size ?? derived.size,
       text: selection.text,
       truncated: selection.truncated,
       nextOffset: selection.nextOffset,

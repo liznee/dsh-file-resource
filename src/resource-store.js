@@ -18,7 +18,7 @@ const DEFAULTS = {
 }
 
 function emptyIndex() {
-  return { version: 1, resources: {}, sessions: {} }
+  return { version: 1, resources: {}, sessions: {}, mentions: {} }
 }
 
 function resourceIdFor(hash) {
@@ -46,6 +46,7 @@ export class ResourceStore {
       if (parsed?.version !== 1 || typeof parsed.resources !== 'object' || typeof parsed.sessions !== 'object') {
         throw new Error('unsupported resource index')
       }
+      if (typeof parsed.mentions !== 'object' || parsed.mentions === null) parsed.mentions = {}
       this.index = parsed
     } catch (error) {
       if (error?.code !== 'ENOENT') throw error
@@ -111,10 +112,36 @@ export class ResourceStore {
   }
 
   async markSent(sessionId, resourceIds) {
-    const bindings = this.index.sessions[validateSessionId(sessionId)] ?? []
+    const id = validateSessionId(sessionId)
+    const bindings = this.index.sessions[id] ?? []
     const requested = new Set(resourceIds.map(validateResourceId))
     for (const binding of bindings) if (requested.has(binding.resourceId)) binding.status = 'sent'
+    // Record the conversation's send history: previews keep working even after
+    // the pending attachment is removed from the draft dock.
+    const history = this.index.mentions[id] ?? []
+    for (const binding of bindings) {
+      if (!requested.has(binding.resourceId)) continue
+      if (history.some(entry => entry.resourceId === binding.resourceId && entry.fileName === binding.fileName)) continue
+      history.push({ resourceId: binding.resourceId, fileName: binding.fileName, sentAt: this.now() })
+    }
+    this.index.mentions[id] = history
     await this.flush()
+  }
+
+  listMentions(sessionId) {
+    this.assertOpen()
+    return [...(this.index.mentions[validateSessionId(sessionId)] ?? [])]
+  }
+
+  /** Read derived content by resource id without requiring a live session binding. */
+  async readDerivedForResource(resourceId) {
+    this.assertOpen()
+    const rid = validateResourceId(resourceId)
+    const resource = this.index.resources[rid]
+    if (resource === undefined) throw new Error('resource not found')
+    if (resource.derivedRelative === null) throw new Error('resource parsing is not complete')
+    const parsed = JSON.parse((await gunzip(await readFile(join(this.root, resource.derivedRelative)))).toString('utf8'))
+    return { ...this.publicRecord(resource), chunks: parsed.chunks }
   }
 
   async remove(sessionId, resourceId) {

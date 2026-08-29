@@ -1,6 +1,6 @@
 {
   "name": "dsh-file-resource",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Private local file attachments for DeepSeek Harness with native images and bounded document reading.",
   "author": "liznee",
   "repository": {

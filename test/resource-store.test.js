@@ -42,6 +42,32 @@ test('stores uploaded bytes by content hash and deduplicates identical files', a
   })
 })
 
+test('keeps a per-session mention history that survives attachment removal', async () => {
+  await withStore(async store => {
+    const attached = await store.put({
+      sessionId: 'session-a', fileName: '卡片.xlsx', mediaType: 'text/plain', bytes: Buffer.from('cells'),
+    })
+    await store.setDerived(attached.resourceId, { kind: 'xlsx', chunks: [{ index: 0, text: 'cells', metadata: {} }] })
+    await store.markSent('session-a', [attached.resourceId])
+
+    assert.equal(store.listMentions('session-a').length, 1)
+    assert.equal(store.listMentions('session-a')[0].fileName, '卡片.xlsx')
+
+    // 移除即时附件引用后，发送历史仍授权读取
+    await store.remove('session-a', attached.resourceId)
+    assert.equal((await store.listSession('session-a')).length, 0)
+    assert.equal(store.listMentions('session-a').length, 1)
+    const derived = await store.readDerivedForResource(attached.resourceId)
+    assert.equal(derived.kind, 'xlsx')
+
+    // 重复发送同一文件不会重复记录
+    await store.put({ sessionId: 'session-a', fileName: '卡片.xlsx', mediaType: 'text/plain', bytes: Buffer.from('cells') })
+    const again = await store.listSession('session-a')
+    await store.markSent('session-a', again.map(r => r.resourceId))
+    assert.equal(store.listMentions('session-a').length, 1)
+  })
+})
+
 test('enforces per-file, per-batch and cache quotas before retaining bytes', async () => {
   await withStore(async (store) => {
     await assert.rejects(() => store.put({

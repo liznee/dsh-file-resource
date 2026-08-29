@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.4] - 2026-08-29
+
+### Fixed
+
+- **Previews of sent files stop breaking when the pending attachment is
+  removed**: the store now keeps a per-conversation **send history** (recorded
+  on commit, deduplicated, unaffected by removing the draft card). Preview
+  resolves through the live attachment first, then the conversation's send
+  history, so a file you already sent in this conversation can always be
+  previewed again.
+
 ## [0.4.3] - 2026-08-29
 
 ### Fixed
@@ -104,6 +115,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.4]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.4
 [0.4.3]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.3
 [0.4.2]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.2
 [0.4.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.1

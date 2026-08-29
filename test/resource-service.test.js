@@ -62,6 +62,19 @@ test('preview reads an attached file by name, scoped to the session', async () =
   })
 })
 
+test('preview falls back to the session send history after the attachment is removed', async () => {
+  await fixture(async service => {
+    const uploaded = await service.upload({
+      sessionId: 'session-a', fileName: '卡片.txt', mediaType: 'text/plain', bytes: Buffer.from('alpha'),
+    })
+    await service.commit('session-a', [uploaded.resourceId])
+    await service.remove('session-a', uploaded.resourceId)
+    const preview = await service.preview('session-a', '卡片.txt')
+    assert.equal(preview.fileName, '卡片.txt')
+    assert.match(preview.text, /alpha/)
+  })
+})
+
 test('tool execution is scoped to the calling agent session', async () => {
   await fixture(async service => {
     const uploaded = await service.upload({
