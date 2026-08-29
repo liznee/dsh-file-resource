@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.6] - 2026-08-29
+
+### Fixed
+
+- **Preview only opens for real files**: the plugin keeps a per-conversation
+  registry of file names actually attached or sent by this conversation (in
+  localStorage), and `@` references are checked against it before opening the
+  panel. Email addresses (`@163.com`) or arbitrary `@text` in the chat no
+  longer trigger anything, and clicks inside the composer card are ignored
+  entirely.
+
 ## [0.4.5] - 2026-08-29
 
 ### Changed
@@ -127,6 +138,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.6]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.6
 [0.4.5]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.5
 [0.4.4]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.4
 [0.4.3]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.3

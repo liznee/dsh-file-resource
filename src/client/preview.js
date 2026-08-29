@@ -10,9 +10,10 @@ import { RESOURCE_ENDPOINT } from '../shared.js'
 const PREVIEW_STYLE_ID = 'dsh-file-resource-preview'
 const PREVIEW_STYLES = `
 .dsh-file-resource-preview-backdrop {
-  background: rgba(0, 0, 0, .18);
-  inset: 0;
+  background: transparent;
+  inset: 0 auto 0 0;
   position: fixed;
+  right: var(--dsh-preview-width, 50vw);
   z-index: 1500;
 }
 .dsh-file-resource-preview {
@@ -25,8 +26,14 @@ const PREVIEW_STYLES = `
   inset: 0 0 0 auto;
   max-width: 100vw;
   position: fixed;
-  width: min(440px, 92vw);
+  width: var(--dsh-preview-width, 50vw);
   z-index: 1501;
+}
+/* True split view: while the preview is open the conversation column shifts
+   left and the right half belongs to the preview panel. */
+body[data-dsh-preview-open] [data-conversation-scroll],
+body[data-dsh-preview-open] [data-composer-seat] {
+  margin-right: var(--dsh-preview-width, 50vw);
 }
 .dsh-file-resource-preview-header {
   align-items: center;
@@ -90,11 +97,11 @@ const PREVIEW_STYLES = `
 .dsh-file-resource-preview-table td {
   border: 1px solid rgba(127, 127, 127, .24);
   line-height: 1.5;
-  max-width: 300px;
-  overflow: hidden;
+  min-width: 40px;
   padding: 3px 7px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  vertical-align: top;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .dsh-file-resource-preview-table tr[data-head='true'] td {
   background: rgba(127, 127, 127, .10);
@@ -221,21 +228,9 @@ export async function openPreview({ document: documentRef = document, sessionId,
   panel.append(header, body, truncated)
   documentRef.body?.append?.(backdrop, panel)
 
-  // Align the panel with the conversation's vertical bounds so its top and
-  // bottom edges sit on the same horizontal lines as the chat layout.
-  const alignPanel = () => {
-    const scroll = typeof documentRef.querySelector === 'function'
-      ? documentRef.querySelector('[data-conversation-scroll]') ?? documentRef.querySelector('[data-composer-card]')
-      : null
-    const rect = typeof scroll?.getBoundingClientRect === 'function' ? scroll.getBoundingClientRect() : null
-    if (rect === null || rect.height === 0) return
-    const height = documentRef.defaultView?.innerHeight
-      ?? documentRef.documentElement?.clientHeight
-      ?? 0
-    panel.style.top = `${Math.max(0, Math.round(rect.top))}px`
-    panel.style.bottom = `${Math.max(0, Math.round(height - rect.bottom))}px`
-  }
-  alignPanel()
+  // Activate the split view: conversation shrinks to the left half.
+  documentRef.body.dataset.dshPreviewOpen = 'true'
+  documentRef.body.style.setProperty('--dsh-preview-width', 'min(50vw, 720px)')
 
   let disposed = false
   const onKey = event => { if (event.key === 'Escape') destroy() }
@@ -243,6 +238,8 @@ export async function openPreview({ document: documentRef = document, sessionId,
     if (disposed) return
     disposed = true
     documentRef.removeEventListener('keydown', onKey, true)
+    delete documentRef.body.dataset.dshPreviewOpen
+    documentRef.body.style.removeProperty('--dsh-preview-width')
     backdrop.remove()
     panel.remove()
   }

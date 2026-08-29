@@ -171,7 +171,44 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
   const previousInput = React.useRef(input)
   const sendingIds = React.useRef([])
   const syncButton = React.useRef(() => {})
+  const knownFiles = React.useRef(new Set())
   live.current = { input, inputActions, items }
+
+  const knownStorageKey = `dsh-file-resource:names:${sessionId}`
+  const loadKnownFiles = React.useCallback(() => {
+    const names = new Set()
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem(knownStorageKey)
+        if (raw !== null) {
+          for (const name of JSON.parse(raw)) names.add(String(name))
+        }
+      }
+    } catch {}
+    return names
+  }, [knownStorageKey])
+  const persistKnownFiles = React.useCallback(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(knownStorageKey, JSON.stringify([...knownFiles.current]))
+      }
+    } catch {}
+  }, [knownStorageKey])
+
+  React.useEffect(() => {
+    knownFiles.current = loadKnownFiles()
+  }, [loadKnownFiles])
+
+  React.useEffect(() => {
+    let changed = false
+    for (const item of items) {
+      if (item.status === 'ready' && !knownFiles.current.has(item.fileName)) {
+        knownFiles.current.add(item.fileName)
+        changed = true
+      }
+    }
+    if (changed) persistKnownFiles()
+  }, [items, persistKnownFiles])
 
   const update = React.useCallback((localId, patch) => {
     setItems(current => current.map(item => item.localId === localId ? { ...item, ...patch } : item))
@@ -250,10 +287,13 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
     const onPreviewClick = event => {
       const target = event?.target
       if (typeof target?.closest === 'function' && target.closest(
-        '[data-file-resource-dock],[data-file-resource-preview],.dsh-file-resource-preview',
+        '[data-composer-card],[data-file-resource-dock],[data-file-resource-preview],.dsh-file-resource-preview',
       ) !== null) return
       const name = referenceChipName(target) ?? previewCandidateName(target)
       if (name === null) return
+      // 只有本会话真正发过/正在挂着的文件才允许打开预览；
+      // @163.com、随手打的 @文字 之类一律忽略。
+      if (!knownFiles.current.has(name)) return
       event.preventDefault()
       void openPreview({ document, sessionId, fileName: name, t })
     }
