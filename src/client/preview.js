@@ -233,11 +233,31 @@ export async function openPreview({ document: documentRef = document, sessionId,
   documentRef.body.dataset.dshPreviewOpen = 'true'
   documentRef.body.style.setProperty('--dsh-preview-width', 'min(50vw, 720px)')
 
+  // Pin the panel's top and bottom to the left conversation column's bounds,
+  // so both columns' top edges and bottom edges sit on the same lines.
+  const alignColumn = () => {
+    const scroll = typeof documentRef.querySelector === 'function'
+      ? documentRef.querySelector('[data-conversation-scroll]')
+      : null
+    const rect = typeof scroll?.getBoundingClientRect === 'function' ? scroll.getBoundingClientRect() : null
+    if (rect === null || rect.height === 0) return
+    const height = documentRef.defaultView?.innerHeight
+      ?? documentRef.documentElement?.clientHeight
+      ?? 0
+    panel.style.top = `${Math.max(0, Math.round(rect.top))}px`
+    panel.style.bottom = `${Math.max(0, Math.round(height - rect.bottom))}px`
+  }
+  alignColumn()
+
   let disposed = false
   const onKey = event => { if (event.key === 'Escape') destroy() }
+  const onResize = () => { if (!disposed) alignColumn() }
+  const view = documentRef.defaultView ?? null
+  view?.addEventListener('resize', onResize)
   const destroy = () => {
     if (disposed) return
     disposed = true
+    view?.removeEventListener('resize', onResize)
     documentRef.removeEventListener('keydown', onKey, true)
     delete documentRef.body.dataset.dshPreviewOpen
     documentRef.body.style.removeProperty('--dsh-preview-width')

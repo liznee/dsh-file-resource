@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.8] - 2026-08-29
+
+### Changed
+
+- **Split view top/bottom alignment**: the preview panel now pins its top and
+  bottom to the left conversation column's bounds (and re-aligns on window
+  resize), so both columns' horizontal edges line up exactly.
+- **README changelog**: the GitHub homepage now shows an 更新日志 / Changelog
+  section with the recent release highlights, alongside CHANGELOG.md.
+
 ## [0.4.7] - 2026-08-29
 
 ### Fixed
@@ -147,6 +157,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.8]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.8
 [0.4.7]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.7
 [0.4.6]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.6
 [0.4.5]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.5
