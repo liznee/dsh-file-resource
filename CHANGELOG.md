@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.1] - 2026-08-29
+
+### Added
+
+- **Global drag-and-drop**: drag files anywhere over the window — a
+  "release to attach" overlay appears and releasing routes images through the
+  native Harness pipeline and documents through the plugin upload.
+- **Document paste**: `Ctrl+V` with copied files in the composer attaches the
+  non-image files; image-only pastes are left to the native pipeline.
+
+### Fixed
+
+- **@-mention reliability**: token detection now reads the live textarea value
+  instead of the React draft snapshot, so the popup opens correctly even
+  mid-keystroke.
+
 ## [0.2.0] - 2026-08-29
 
 ### Added
@@ -34,6 +50,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.2.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.2.1
 [0.2.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.2.0
 [0.1.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.1.1
 [0.1.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.1.0

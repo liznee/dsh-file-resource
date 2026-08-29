@@ -40,7 +40,7 @@ function createHarness({ files = [{ name: 'report.pdf', resourceId: 'r1' }] } = 
   const textarea = {
     listeners: {},
     selectionStart: 3,
-    value: '',
+    value: draft,
     addEventListener(type, handler) { this.listeners[type] = handler },
     removeEventListener() {},
     focus() {},
@@ -65,7 +65,7 @@ function createHarness({ files = [{ name: 'report.pdf', resourceId: 'r1' }] } = 
   const controller = new MentionController({
     documentRef,
     getDraft: () => draft,
-    setDraft: value => { draft = value },
+    setDraft: value => { draft = value; textarea.value = value },
     getReadyFiles: () => files,
     onState: state => { states.push(state) },
   })

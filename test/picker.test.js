@@ -6,7 +6,10 @@ import {
   createFilePicker,
   dismissPickerOverlay,
   dispatchImagesAsDrop,
+  documentFilesOnly,
   installAttachActivationBridge,
+  installDocumentPasteBridge,
+  installGlobalDropTarget,
   installMenuLayerStyles,
   partitionSelectedFiles,
 } from '../src/picker.js'
@@ -281,4 +284,84 @@ test('adds one divider that separates attach from the original command rows', ()
   assert.equal(env.styles[0].removed, false)
   firstCleanup()
   assert.equal(env.styles[0].removed, true)
+})
+
+test('documentFilesOnly keeps documents but routes images to the native pipeline', () => {
+  const image = { name: 'shot.png', type: 'image/png' }
+  const unnamed = { name: 'drawing.webp', type: '' }
+  const doc = { name: 'report.pdf', type: 'application/pdf' }
+  const text = { name: 'notes.txt', type: 'text/plain' }
+  assert.deepEqual(documentFilesOnly([image, unnamed, doc, text]), [doc, text])
+  assert.deepEqual(documentFilesOnly([]), [])
+})
+
+test('global drop target overlays the window and feeds dropped files to onFiles', () => {
+  const windowEvents = {}
+  const style = { dataset: {}, remove() { this.removed = true }, removed: false, textContent: '' }
+  const overlay = { className: '', remove() { this.removed = true }, removed: false, textContent: '' }
+  const documentRef = {
+    addEventListener() {},
+    body: { append() {} },
+    createElement: tag => tag === 'style' ? style : overlay,
+    head: { append() {} },
+    querySelector: () => null,
+    removeEventListener() {},
+  }
+  const windowRef = {
+    addEventListener(type, handler) { windowEvents[type] = handler },
+    removeEventListener() {},
+  }
+  const received = []
+  let prevented = 0
+  const removeDrop = installGlobalDropTarget({ document: documentRef, window: windowRef, onFiles: files => received.push(...files) })
+  const drop = windowEvents.drop
+
+  windowEvents.dragenter({ dataTransfer: { types: ['Files'] }, preventDefault() {} })
+  assert.equal(overlay.className, 'dsh-file-resource-drop-overlay')
+
+  drop({
+    dataTransfer: { files: [{ name: 'a.pdf', type: 'application/pdf' }], types: ['Files'] },
+    preventDefault() { prevented += 1 },
+  })
+  assert.equal(prevented, 1)
+  assert.equal(received.length, 1)
+  assert.equal(received[0].name, 'a.pdf')
+  assert.equal(overlay.removed, true)
+
+  removeDrop()
+})
+
+test('document paste bridge attaches non-image files and leaves image-only pastes alone', () => {
+  const documentEvents = {}
+  const documentRef = {
+    addEventListener(type, handler) { documentEvents[type] = handler },
+    removeEventListener() {},
+  }
+  const received = []
+  let prevented = 0
+  const removePaste = installDocumentPasteBridge({
+    document: documentRef,
+    onFiles: files => received.push(...files),
+  })
+  const cardTarget = { closest: () => ({}) }
+
+  documentEvents.paste({
+    target: cardTarget,
+    clipboardData: { files: [{ name: 'shot.png', type: 'image/png' }, { name: 'a.pdf', type: 'application/pdf' }] },
+    preventDefault() { prevented += 1 },
+    stopImmediatePropagation() {},
+  })
+  assert.equal(prevented, 1)
+  assert.deepEqual(received.map(file => file.name), ['a.pdf'])
+
+  documentEvents.paste({
+    target: cardTarget,
+    clipboardData: { files: [{ name: 'shot.png', type: 'image/png' }] },
+    preventDefault() { prevented += 1 },
+    stopImmediatePropagation() {},
+  })
+  assert.equal(prevented, 1)
+  assert.equal(received.length, 1)
+
+  removePaste()
 })

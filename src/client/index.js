@@ -5,6 +5,8 @@ import {
   dispatchDocumentSelection,
   dispatchImagesAsDrop,
   installAttachActivationBridge,
+  installDocumentPasteBridge,
+  installGlobalDropTarget,
   installMenuLayerStyles,
   partitionSelectedFiles,
 } from '../picker.js'
@@ -99,6 +101,23 @@ export function apply(ctx) {
   ctx.effect(() => commandUi.decorate(createAttachDecoration({
     open: () => { picker?.open() },
   })), 'dsh-file-resource: attach command decoration')
+
+  ctx.effect(() => {
+    const removeDrop = installGlobalDropTarget({
+      onFiles: files => {
+        const { images, documents } = partitionSelectedFiles(files)
+        if (images.length > 0) dispatchImagesAsDrop(images)
+        if (documents.length > 0) dispatchDocumentSelection(documents)
+      },
+    })
+    const removePaste = installDocumentPasteBridge({
+      onFiles: documents => { dispatchDocumentSelection(documents) },
+    })
+    return () => {
+      removeDrop()
+      removePaste()
+    }
+  }, 'dsh-file-resource: global drop and document paste')
 
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock',

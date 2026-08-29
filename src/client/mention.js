@@ -160,7 +160,10 @@ export class MentionController {
 
   refresh() {
     if (this.disposed || this.textarea === null) return
-    const token = detectMentionToken(this.getDraft(), this.textarea.selectionStart)
+    // Token math reads the live textarea value (not the React draft snapshot),
+    // so the caret position and the text always agree even mid-keystroke.
+    const draft = this.textarea?.value ?? this.getDraft()
+    const token = detectMentionToken(draft, this.textarea.selectionStart ?? draft.length)
     const files = (this.getReadyFiles ?? (() => []))()
     if (token === null || files.length === 0) {
       this.close()
@@ -188,7 +191,8 @@ export class MentionController {
   commit(fileName) {
     const open = this.open
     if (open === null || typeof fileName !== 'string' || fileName === '') return
-    const next = replaceMention(this.getDraft(), open, fileName)
+    const draft = this.textarea?.value ?? this.getDraft()
+    const next = replaceMention(draft, open, fileName)
     this.close()
     this.setDraft(next)
     const caret = open.end + 1 + fileName.length
