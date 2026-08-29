@@ -24,7 +24,7 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 - 文档解析完全在本机完成；上传或解析本身不会调用模型，也没有遥测。
 - 支持全局拖拽（把文件拖到窗口任意位置，"松开以添加文件"）与文档粘贴（在输入框 `Ctrl+V` 粘贴复制的文件）；图片始终走 Harness 原生流程。
 - 发送消息（含"只传文件"）时会自动在消息末尾附上 `@文件名` 引用，聊天记录里直接可见本条消息带了哪些文件；模型按名对应资源 ID 再读取。（输入框里的 `@` 属于 Harness 自带的工作区文件/会话引用，插件不与之冲突。）
-- 点击聊天消息里的蓝色 `@文件名`，右侧会滑出该文件的预览面板（Esc、点遮罩或 × 关闭）。
+- 点击聊天消息里的蓝色 `@文件名`，右侧以**分栏预览**文件内容（Excel/CSV 显示带格线的表格、超长自动换行）；× 或 Esc 关闭，左侧滚动/打字/语音输入完全不受影响。
 
 ## 更新日志
 
@@ -54,21 +54,21 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 
 要求与当前 DeepSeek Harness 一致：Node.js `22.19+` 或 `24+`。`v0.1.1` 已在 DeepSeek Harness `0.1.1-rc.1` 上验证。
 
-从 npm 安装固定版本：
+从 npm 安装最新版：
 
 ```powershell
-dsh plugin --profile web add dsh-file-resource@0.1.1
+dsh plugin --profile web add dsh-file-resource
 ```
 
 也可以直接安装对应的 GitHub Release：
 
 ```powershell
-dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.1
+dsh plugin --profile web add github:liznee/dsh-file-resource#v0.4.9
 ```
 
 安装后运行 `dsh --profile web --dump-config`，输出中应出现 `# == dsh-file-resource`。随后重启 `dsh web`，从输入框左下角的 `+` 选择 `attach`。
 
-升级时，将上述安装命令中的 `0.1.1` 替换为准备安装的新版本。卸载命令：
+升级时，将上述安装命令中的 `0.4.9` 替换为准备安装的新版本。卸载命令：
 
 ```powershell
 dsh plugin --profile web remove dsh-file-resource
@@ -134,8 +134,8 @@ Supported documents: PDF, DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, EPUB, plus commo
 Install with:
 
 ```powershell
-dsh plugin --profile web add dsh-file-resource@0.1.1
-# or: dsh plugin --profile web add github:liznee/dsh-file-resource#v0.1.1
+dsh plugin --profile web add dsh-file-resource
+# or: dsh plugin --profile web add github:liznee/dsh-file-resource#v0.4.9
 ```
 
 The plugin has no telemetry or third-party file upload. See the Chinese sections above for cache limits, token estimates, security controls, and performance measurements.
