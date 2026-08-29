@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  bindAttachedSendButton,
   bindFileOnlySendButton,
+  composeAttachedDraft,
   shouldCommitDraftFiles,
   uploadBrowserResource,
 } from '../src/client/resources.js'
@@ -156,6 +158,49 @@ test('dispose never mutates the disabled attribute', () => {
   binding.dispose()
   assert.equal(button.disabled, false)
   assert.equal(button.dataset.dshFileResourceSend, undefined)
+})
+
+test('composeAttachedDraft appends @names after the text, or alone for file-only sends', () => {
+  assert.equal(composeAttachedDraft('review this', ['a.pdf', 'b.xlsx']), 'review this @a.pdf @b.xlsx')
+  assert.equal(composeAttachedDraft('', ['a.pdf']), '@a.pdf')
+  assert.equal(composeAttachedDraft('x', []), 'x')
+  assert.equal(composeAttachedDraft('  x  ', ['a.pdf']), '  x @a.pdf')
+})
+
+test('attached binding appends @names to the draft and submits instead of waking', () => {
+  const button = new FakeButton()
+  let draft = '帮我看下'
+  const calls = []
+  const binding = bindAttachedSendButton(button, {
+    getDraft: () => draft,
+    setDraft: value => { draft = value },
+    submit: () => { calls.push('submit') },
+    getReadyNames: () => ['剑来收藏卡册.xlsx'],
+  })
+  binding.update({ eligible: true, busy: false })
+  assert.equal(button.disabled, false)
+  assert.equal(button.dataset.dshFileResourceSend, 'true')
+
+  button.dispatchEvent(new Event('click', { cancelable: true }))
+  assert.equal(draft, '帮我看下 @剑来收藏卡册.xlsx')
+  assert.deepEqual(calls, ['submit'])
+  assert.equal(button.dataset.dshFileResourceSendBusy, undefined)
+  binding.dispose()
+})
+
+test('attached binding leaves the draft alone when there is nothing to attach', () => {
+  const button = new FakeButton()
+  const calls = []
+  const binding = bindAttachedSendButton(button, {
+    getDraft: () => 'plain text',
+    setDraft: () => { calls.push('setDraft') },
+    submit: () => { calls.push('submit') },
+    getReadyNames: () => [],
+  })
+  binding.update({ eligible: true, busy: false })
+  button.dispatchEvent(new Event('click', { cancelable: true }))
+  assert.deepEqual(calls, [])
+  binding.dispose()
 })
 
 test('commits document cards only after a successful Harness submission', () => {

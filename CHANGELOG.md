@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.3.0] - 2026-08-29
+
+### Added
+
+- **Visible attachments in sent messages**: when a message goes out with ready
+  documents, the draft is completed with `@fileName …` mentions first (both via
+  the send button and plain Enter), so the conversation shows exactly which
+  files were attached — no more silent sends. The model maps the `@name` to the
+  resource ID and reads it on demand. The legacy hidden file-only wake message
+  is replaced by this visible flow.
+
 ## [0.2.1] - 2026-08-29
 
 ### Added
@@ -50,6 +61,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.3.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.3.0
 [0.2.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.2.1
 [0.2.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.2.0
 [0.1.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.1.1

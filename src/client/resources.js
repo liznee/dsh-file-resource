@@ -145,3 +145,80 @@ export function bindFileOnlySendButton(button, { onSend }) {
     },
   }
 }
+
+/** "review this" + ["a.pdf"] → "review this @a.pdf"; an empty draft becomes "@a.pdf". */
+export function composeAttachedDraft(draft, names) {
+  const mentions = (names ?? []).filter(Boolean).map(name => `@${String(name)}`).join(' ')
+  const base = String(draft ?? '').trimEnd()
+  if (mentions === '') return String(draft ?? '')
+  return base === '' ? mentions : `${base} ${mentions}`
+}
+
+/**
+ * Unified send binding: whenever the message goes out with ready documents,
+ * the draft gets the "@fileName …" mentions appended first, so the sent
+ * message visibly shows what was attached and the model can map names to
+ * resource IDs. Works for both file-only sends (empty draft) and text + files.
+ */
+export function bindAttachedSendButton(button, {
+  getDraft = () => '',
+  setDraft = () => {},
+  submit = () => {},
+  getReadyNames = () => [],
+}) {
+  let owned = false
+  let busy = false
+  let lastReactDisabled = false
+
+  const run = () => {
+    if (!owned || busy) return
+    const current = String(getDraft())
+    const next = composeAttachedDraft(current, getReadyNames())
+    if (next === current) return
+    busy = true
+    button.inert = true
+    button.dataset.dshFileResourceSendBusy = 'true'
+    try {
+      setDraft(next)
+      submit()
+    } finally {
+      busy = false
+      button.inert = false
+      delete button.dataset.dshFileResourceSendBusy
+    }
+  }
+
+  const onClick = event => {
+    if (!owned || busy) return
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    run()
+  }
+  button.addEventListener('click', onClick, true)
+
+  return {
+    update(state) {
+      lastReactDisabled = state.reactDisabled === true
+      if (state.eligible && !state.busy && !busy) {
+        owned = true
+        button.dataset.dshFileResourceSend = 'true'
+        if (button.disabled) button.disabled = false
+      } else if (owned) {
+        // 仅在插件自己劫持启用过、且 React 语义现在是禁用（空草稿或忙）时恢复。
+        owned = false
+        delete button.dataset.dshFileResourceSend
+        if (lastReactDisabled && !button.disabled) button.disabled = true
+      } else {
+        delete button.dataset.dshFileResourceSend
+      }
+    },
+    dispose() {
+      button.removeEventListener('click', onClick, true)
+      if (owned) {
+        owned = false
+        delete button.dataset.dshFileResourceSend
+        if (lastReactDisabled && !button.disabled) button.disabled = true
+      }
+    },
+  }
+}

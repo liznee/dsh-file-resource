@@ -22,6 +22,7 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 - 文档解析完全在本机完成；上传或解析本身不会调用模型，也没有遥测。
 - 输入框输入 `@` 会弹出已就绪文档列表（↑/↓ 选择、Enter 确认、Esc 关闭），选中后插入 `@文件名` 引用；模型把名字对应到资源 ID，再用受限读取工具按需读取。
 - 支持全局拖拽（把文件拖到窗口任意位置，"松开以添加文件"）与文档粘贴（在输入框 `Ctrl+V` 粘贴复制的文件）；图片始终走 Harness 原生流程。
+- 发送消息（含"只传文件"）时会自动在消息末尾附上 `@文件名` 引用，聊天记录里直接可见本条消息带了哪些文件；模型按名对应资源 ID 再读取。
 
 ## 支持格式
 
@@ -106,7 +107,7 @@ npm run pack:check
 
 ## English
 
-`dsh-file-resource` adds a unified `attach` entry to the existing DeepSeek Harness Web `+` menu. Images continue through Harness's native attachment pipeline. Documents are parsed locally into session-scoped, content-addressed resources and exposed to the model through one bounded read tool; no synthetic user message is shown. Type `@` in the composer to reference an attached document by name — the model maps the name to the resource ID and reads it on demand. Drag any file anywhere over the window, or paste copied files into the composer, to attach them.
+`dsh-file-resource` adds a unified `attach` entry to the existing DeepSeek Harness Web `+` menu. Images continue through Harness's native attachment pipeline. Documents are parsed locally into session-scoped, content-addressed resources and exposed to the model through one bounded read tool. Sending with attached documents appends `@fileName` mentions to the message, so the conversation visibly shows what was sent and the model maps the names to resource IDs. Type `@` in the composer to reference an attached document by name; drag any file anywhere over the window, or paste copied files into the composer, to attach them.
 
 Supported documents: PDF, DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, EPUB, plus common text and source-code formats. Legacy DOC/XLS/PPT files and automatic OCR for image-only PDFs are intentionally unsupported.
 

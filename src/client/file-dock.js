@@ -1,7 +1,8 @@
 import React from 'react'
 
 import {
-  bindFileOnlySendButton,
+  bindAttachedSendButton,
+  composeAttachedDraft,
   resourceOperation,
   shouldCommitDraftFiles,
   uploadBrowserResource,
@@ -330,38 +331,64 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
     if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return undefined
     let button = null
     let binding = null
+
+    const attachedNames = () => live.current.items
+      .filter(item => item.status === 'ready')
+      .map(item => item.fileName)
+
+    const sendWithAttachments = () => {
+      const state = live.current.input
+      if (state?.phase !== 'plain') return false
+      const next = composeAttachedDraft(state?.draft ?? '', attachedNames())
+      if (String(state?.draft ?? '') === next) return false
+      if (live.current.inputActions?.setDraft) live.current.inputActions.setDraft(next)
+      live.current.inputActions?.submit()
+      return true
+    }
+
+    // Enter sends: intercept only when ready documents are attached and the
+    // mention popup (which owns Enter while open) is not visible.
+    const onKeyDown = event => {
+      if (event.defaultPrevented || event.isComposing) return
+      if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return
+      const target = event.target
+      if (typeof target?.closest !== 'function' || target.closest('[data-composer-card]') === null) return
+      if (document.querySelector('[data-file-resource-mention]') !== null) return
+      if (attachedNames().length === 0) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      sendWithAttachments()
+    }
+
     const sync = () => {
       const next = arrowSendButton(document)
       if (next !== button) {
         binding?.dispose()
         button = next
-        binding = button === null ? null : bindFileOnlySendButton(button, {
-          onSend: async () => {
-            const ids = live.current.items.filter(item => item.status === 'ready').map(item => item.resourceId)
-            if (ids.length === 0) return
-            try {
-              await resourceOperation(sessionId, 'wake', { resourceIds: ids })
-              setItems(current => current.filter(item => !ids.includes(item.resourceId)))
-            } catch {
-              setItems(current => [...current, errorItem(t('sendFailed'))])
-            } finally { sync() }
+        binding = button === null ? null : bindAttachedSendButton(button, {
+          getDraft: () => live.current.input?.draft ?? '',
+          setDraft: value => {
+            if (live.current.input?.phase === 'plain') live.current.inputActions?.setDraft(value)
           },
+          submit: () => { live.current.inputActions?.submit() },
+          getReadyNames: attachedNames,
         })
       }
       const state = live.current.input
       binding?.update({
-        eligible: live.current.items.some(item => item.status === 'ready')
-          && state?.phase === 'plain' && String(state?.draft ?? '').trim() === '',
+        eligible: attachedNames().length > 0 && state?.phase === 'plain',
         busy: state?.phase === 'adjudicating' || state?.phase === 'submitting',
         reactDisabled: reactDisabledFromInput(state),
       })
     }
     syncButton.current = sync
+    document.addEventListener('keydown', onKeyDown, true)
     const observer = new MutationObserver(sync)
     observer.observe(document.body, { attributes: true, childList: true, subtree: true, attributeFilter: ['disabled'] })
     sync()
     return () => {
       syncButton.current = () => {}
+      document.removeEventListener('keydown', onKeyDown, true)
       observer.disconnect()
       binding?.dispose()
     }
