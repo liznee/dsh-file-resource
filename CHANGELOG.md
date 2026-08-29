@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.1] - 2026-08-29
+
+### Removed
+
+- **The attachment `@`-picker is removed.** `@` in the composer is the DeepSeek
+  Harness native workspace-file / session reference surface; the plugin no
+  longer registers an overlapping attachment list there. Attachments still
+  appear automatically as `@fileName` mentions in sent messages and stay
+  previewable by clicking them in the conversation.
+
 ## [0.4.0] - 2026-08-29
 
 ### Added
@@ -70,6 +80,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.1
 [0.4.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.0
 [0.3.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.3.0
 [0.2.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.2.1

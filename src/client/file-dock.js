@@ -7,7 +7,6 @@ import {
   shouldCommitDraftFiles,
   uploadBrowserResource,
 } from './resources.js'
-import { MentionController } from './mention.js'
 import { installPreviewStyles, openPreview, previewCandidateName } from './preview.js'
 
 const MAX_FILES = 20
@@ -57,51 +56,8 @@ export const FILE_DOCK_STYLES = `
 .dsh-file-resource-cancel { align-items: center; background: rgba(127,127,127,.20); border: 0; border-radius: 999px; color: var(--dsw-alias-label-secondary); cursor: pointer; display: inline-flex; height: 28px; justify-content: center; padding: 0; width: 28px; }
 .dsh-file-resource-cancel:hover { background: rgba(127,127,127,.30); color: var(--dsw-alias-label-primary); }
 .dsh-file-resource-cancel:focus-visible { outline: 2px solid var(--dsw-alias-state-focus-primary, currentColor); outline-offset: 2px; }
-/* 仅文件发送（wake）飞行中的视觉反馈：不触碰 React 拥有的 disabled 属性 */
+/* 仅文件发送（wake 兼容）飞行中的视觉反馈：不触碰 React 拥有的 disabled 属性 */
 [data-dsh-file-resource-send-busy] { cursor: default; opacity: .55; }
-.dsh-file-resource-mention {
-  background: var(--dsw-alias-bg-layer-2, #ffffff);
-  border: 1px solid rgba(127, 127, 127, .25);
-  border-radius: 10px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, .22);
-  box-sizing: border-box;
-  font-size: 13px;
-  max-height: 192px;
-  overflow-y: auto;
-  padding: 4px;
-  position: fixed;
-  width: min(320px, 76vw);
-  z-index: 1200;
-}
-.dsh-file-resource-mention-item {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: 7px;
-  color: var(--dsw-alias-label-primary);
-  cursor: pointer;
-  display: flex;
-  font: inherit;
-  gap: 6px;
-  line-height: 20px;
-  margin: 0;
-  padding: 4px 8px;
-  text-align: left;
-  width: 100%;
-}
-.dsh-file-resource-mention-item:hover,
-.dsh-file-resource-mention-item[data-selected='true'] {
-  background: rgba(127, 127, 127, .18);
-}
-.dsh-file-resource-mention-at {
-  color: var(--dsw-alias-label-secondary);
-  flex: none;
-}
-.dsh-file-resource-mention-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 @media (prefers-reduced-motion: reduce) { .dsh-file-resource-progress > i { transition: none; } }
 `
 
@@ -207,14 +163,12 @@ function arrowSendButton(documentRef) {
 
 export function FileResourceDock({ sessionId, input, inputActions, t }) {
   const [items, setItems] = React.useState([])
-  const [mention, setMention] = React.useState(null)
   const dockRef = React.useRef(null)
   const operations = React.useRef(new Map())
   const live = React.useRef({ input, items })
   const previousInput = React.useRef(input)
   const sendingIds = React.useRef([])
   const syncButton = React.useRef(() => {})
-  const mentionController = React.useRef(null)
   live.current = { input, inputActions, items }
 
   const update = React.useCallback((localId, patch) => {
@@ -290,32 +244,11 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
 
   React.useEffect(() => {
     if (typeof document === 'undefined') return undefined
-    const controller = new MentionController({
-      documentRef: document,
-      getDraft: () => live.current.input?.draft ?? '',
-      setDraft: value => {
-        if (live.current.input?.phase === 'plain') live.current.inputActions?.setDraft(value)
-      },
-      getReadyFiles: () => live.current.items
-        .filter(item => item.status === 'ready')
-        .map(item => ({ name: item.fileName, resourceId: item.resourceId })),
-      onState: setMention,
-    })
-    mentionController.current = controller
-    controller.attach()
-    return () => {
-      controller.dispose()
-      mentionController.current = null
-    }
-  }, [])
-
-  React.useEffect(() => {
-    if (typeof document === 'undefined') return undefined
     const removeStyles = installPreviewStyles(document)
     const onPreviewClick = event => {
       const target = event?.target
       if (typeof target?.closest === 'function' && target.closest(
-        '[data-file-resource-mention],[data-file-resource-dock],[data-file-resource-preview],.dsh-file-resource-preview',
+        '[data-file-resource-dock],[data-file-resource-preview],.dsh-file-resource-preview',
       ) !== null) return
       const name = previewCandidateName(target)
       if (name === null) return
@@ -328,10 +261,6 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
       removeStyles()
     }
   }, [sessionId, t])
-
-  const commitMention = React.useCallback(name => {
-    mentionController.current?.commit(name)
-  }, [])
 
   React.useEffect(() => {
     const previous = previousInput.current
@@ -371,14 +300,12 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
       return true
     }
 
-    // Enter sends: intercept only when ready documents are attached and the
-    // mention popup (which owns Enter while open) is not visible.
+    // Enter sends: intercept only when ready documents are attached.
     const onKeyDown = event => {
       if (event.defaultPrevented || event.isComposing) return
       if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return
       const target = event.target
       if (typeof target?.closest !== 'function' || target.closest('[data-composer-card]') === null) return
-      if (document.querySelector('[data-file-resource-mention]') !== null) return
       if (attachedNames().length === 0) return
       event.preventDefault()
       event.stopImmediatePropagation()
@@ -437,29 +364,8 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
   }, [items.length > 0, remove, sessionId])
 
   if (items.length === 0) return null
-  const mentionStyle = mention?.open === true
-    ? mention.above && mention.textareaTop !== null
-      ? { bottom: `${mention.viewportHeight - mention.textareaTop + 8}px`, left: mention.left }
-      : { top: `${(mention.textareaBottom ?? 0) + 8}px`, left: mention.left }
-    : undefined
-  return React.createElement(React.Fragment, null,
-    React.createElement('div', {
-      className: 'dsh-file-resource-dock', 'data-file-resource-dock': true, ref: dockRef,
-    },
-      ...items.map(item => React.createElement(ResourceCard, { item, key: item.localId, onRemove: remove, t }))),
-    mention?.open === true && React.createElement('div', {
-      className: 'dsh-file-resource-mention', 'data-file-resource-mention': true, role: 'listbox', style: mentionStyle,
-    },
-      ...mention.files.map((file, index) => React.createElement('button', {
-        'aria-selected': index === mention.index ? 'true' : 'false',
-        className: 'dsh-file-resource-mention-item',
-        'data-selected': index === mention.index ? 'true' : 'false',
-        key: `${file.resourceId ?? index}:${file.name}`,
-        onClick: () => { commitMention(file.name) },
-        onMouseEnter: () => setMention(current => current === null || current.open !== true ? current : { ...current, index }),
-        role: 'option',
-        type: 'button',
-      },
-      React.createElement('span', { className: 'dsh-file-resource-mention-at' }, '@'),
-      React.createElement('span', { className: 'dsh-file-resource-mention-name' }, file.name)))))
+  return React.createElement('div', {
+    className: 'dsh-file-resource-dock', 'data-file-resource-dock': true, ref: dockRef,
+  },
+    ...items.map(item => React.createElement(ResourceCard, { item, key: item.localId, onRemove: remove, t })))
 }
