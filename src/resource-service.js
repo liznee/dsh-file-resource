@@ -2,6 +2,13 @@ import { ParseQueue, parseResource } from './resource-parser.js'
 import { readSelection, resourcePrompt } from './resource-reader.js'
 import { validateDeclaredFile } from './resource-security.js'
 
+/** Trim and unwrap the surrounding ASCII quotes some ref chips carry. */
+export function normalizeFileName(name) {
+  return String(name ?? '')
+    .trim()
+    .replace(/^"|"$/gu, '')
+}
+
 export class ResourceService {
   constructor({ store, parseQueue = new ParseQueue({ concurrency: 1 }), parser = parseResource }) {
     this.store = store
@@ -61,9 +68,10 @@ export class ResourceService {
 
   /** Read a bounded preview of an attached file by its file name. */
   async preview(sessionId, fileName) {
+    const want = normalizeFileName(fileName)
     const resources = await this.store.listSession(sessionId)
-    const match = resources.find(resource => String(resource.fileName) === String(fileName))
-    if (match === undefined) throw new Error('no attached file with that name')
+    const match = resources.find(resource => normalizeFileName(resource.fileName) === want)
+    if (match === undefined) throw new Error('no attached file with that name in this session')
     const derived = await this.store.readDerivedForSession(sessionId, match.resourceId)
     const selection = readSelection(derived, { selector: 'summary', limit: 12_000 })
     return {

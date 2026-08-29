@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.3] - 2026-08-29
+
+### Fixed
+
+- **Preview failures now explain themselves**: the preview route returns the
+  concrete reason (e.g. "no attached file with that name in this session")
+  and the panel shows an actionable hint ("此文件不在当前会话的附件里…") instead
+  of the generic "无法预览此文件". File-name matching also tolerates the
+  surrounding quotes some reference chips carry.
+
 ## [0.4.2] - 2026-08-29
 
 ### Fixed
@@ -94,6 +104,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.3]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.3
 [0.4.2]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.2
 [0.4.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.1
 [0.4.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.0

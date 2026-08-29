@@ -85,6 +85,21 @@ test('preview operation reads an attached file by name for the session', async (
   })
 })
 
+test('preview surfaces the specific reason instead of a generic failure', async () => {
+  const route = createResourceRoute({
+    preview: async () => { throw new Error('no attached file with that name in this session') },
+  })
+  const req = request(undefined, {
+    'x-dsh-operation': 'preview',
+    'x-dsh-session': 'session-a',
+    'x-dsh-file-name': encodeURIComponent('missing.txt'),
+  }, 'GET')
+  const res = response()
+  await route.handler(req, res)
+  assert.equal(res.statusCode, 400)
+  assert.deepEqual(res.json(), { ok: false, error: 'no attached file with that name in this session' })
+})
+
 test('route does not leak stack traces or local paths in error responses', async () => {
   const route = createResourceRoute({ upload: async () => { throw new Error('C:\\private\\secret.txt\nSTACK') } })
   const req = request(Buffer.from('x'), { 'content-length': '1', 'x-dsh-operation': 'upload' })

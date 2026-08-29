@@ -20,6 +20,7 @@ export const zh = {
   sendFailed: '文件发送失败，请重试',
   preview: '文件预览', 'preview-close': '关闭预览', 'preview-loading': '正在读取预览…',
   'preview-truncated': '预览已截断，仅显示开头部分', 'preview-failed': '无法预览此文件',
+  'preview-not-in-session': '此文件不在当前会话的附件里（可能是在另一个对话中上传的）',
 }
 
 export const en = {
@@ -29,6 +30,7 @@ export const en = {
   sendFailed: 'The files could not be sent; try again',
   preview: 'File preview', 'preview-close': 'Close preview', 'preview-loading': 'Reading preview…',
   'preview-truncated': 'Preview truncated; only the beginning is shown', 'preview-failed': 'Preview unavailable for this file',
+  'preview-not-in-session': 'This file is not attached to the current conversation (it may have been uploaded in another one)',
 }
 
 /**

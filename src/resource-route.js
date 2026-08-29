@@ -113,7 +113,10 @@ export function createResourceRoute(service, {
           return
         }
         logger.warn?.(`dsh-file-resource request failed: ${error instanceof Error ? error.message : String(error)}`)
-        send(response, 400, { ok: false, error: 'The file could not be processed.' })
+        const message = operation === 'preview'
+          ? (error instanceof Error ? error.message : 'The file could not be processed.')
+          : 'The file could not be processed.'
+        send(response, 400, { ok: false, error: message })
       } finally {
         request.off?.('aborted', onAborted)
       }

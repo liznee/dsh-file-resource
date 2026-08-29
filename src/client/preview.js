@@ -223,12 +223,15 @@ export async function openPreview({ document: documentRef = document, sessionId,
     render(preview.text || '')
     truncated.hidden = preview.truncated !== true
     truncated.textContent = t('preview-truncated') ?? 'Preview truncated'
-  } catch {
+  } catch (error) {
     if (disposed) return
     body.textContent = ''
-    const error = documentRef.createElement('p')
-    error.className = 'dsh-file-resource-preview-status'
-    error.textContent = t('preview-failed') ?? 'Preview unavailable'
-    body.append(error)
+    const hint = documentRef.createElement('p')
+    hint.className = 'dsh-file-resource-preview-status'
+    const detail = String(error?.message ?? '')
+    hint.textContent = /no attached file|not attached/iu.test(detail)
+      ? (t('preview-not-in-session') ?? 'Not attached to this conversation')
+      : (t('preview-failed') ?? 'Preview unavailable')
+    body.append(hint)
   }
 }

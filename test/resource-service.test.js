@@ -54,6 +54,9 @@ test('preview reads an attached file by name, scoped to the session', async () =
     const preview = await service.preview('session-a', 'notes.txt')
     assert.equal(preview.fileName, 'notes.txt')
     assert.match(preview.text, /alpha/)
+    // 蓝色 chip 可能带引号，比对时归一化
+    const quoted = await service.preview('session-a', '"notes.txt"')
+    assert.equal(quoted.fileName, 'notes.txt')
     await assert.rejects(() => service.preview('session-a', 'missing.txt'))
     await assert.rejects(() => service.preview('session-b', 'notes.txt'))
   })
