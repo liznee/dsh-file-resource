@@ -60,8 +60,9 @@ export function createResourceRoute(service, {
       const controller = new AbortController()
       const onAborted = () => { controller.abort() }
       request.once?.('aborted', onAborted)
+      let operation = ''
       try {
-        const operation = header(request, 'x-dsh-operation')
+        operation = header(request, 'x-dsh-operation')
         const declaredLength = Number.parseInt(String(header(request, 'content-length') ?? ''), 10)
         if (operation === 'upload' && Number.isFinite(declaredLength) && declaredLength > maxFileBytes) {
           throw new RequestTooLargeError()
