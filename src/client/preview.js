@@ -9,13 +9,6 @@ import { RESOURCE_ENDPOINT } from '../shared.js'
 
 const PREVIEW_STYLE_ID = 'dsh-file-resource-preview'
 const PREVIEW_STYLES = `
-.dsh-file-resource-preview-backdrop {
-  background: transparent;
-  inset: 0 auto 0 0;
-  position: fixed;
-  right: var(--dsh-preview-width, 50vw);
-  z-index: 1500;
-}
 .dsh-file-resource-preview {
   background: var(--dsw-alias-bg-layer-1, #fff);
   border-left: 1px solid rgba(127, 127, 127, .25);
@@ -198,8 +191,8 @@ export async function openPreview({ document: documentRef = document, sessionId,
   if (typeof documentRef?.createElement !== 'function' || typeof fetch !== 'function') return
   closePreview(documentRef)
 
-  const backdrop = documentRef.createElement('div')
-  backdrop.className = 'dsh-file-resource-preview-backdrop'
+  // No backdrop: a full-left cover would block scrolling and interaction on
+  // the conversation side. Close via the × button or the Escape key.
   const panel = documentRef.createElement('div')
   panel.className = 'dsh-file-resource-preview'
   panel.setAttribute('role', 'dialog')
@@ -227,7 +220,7 @@ export async function openPreview({ document: documentRef = document, sessionId,
   truncated.className = 'dsh-file-resource-preview-truncated'
   truncated.hidden = true
   panel.append(header, body, truncated)
-  documentRef.body?.append?.(backdrop, panel)
+  documentRef.body?.append?.(panel)
 
   // Activate the split view: conversation shrinks to the left half.
   documentRef.body.dataset.dshPreviewOpen = 'true'
@@ -261,11 +254,9 @@ export async function openPreview({ document: documentRef = document, sessionId,
     documentRef.removeEventListener('keydown', onKey, true)
     delete documentRef.body.dataset.dshPreviewOpen
     documentRef.body.style.removeProperty('--dsh-preview-width')
-    backdrop.remove()
     panel.remove()
   }
   close.addEventListener('click', destroy)
-  backdrop.addEventListener('click', destroy)
   documentRef.addEventListener('keydown', onKey, true)
   current = { close: destroy }
 

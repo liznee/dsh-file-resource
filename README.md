@@ -24,6 +24,20 @@ DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜
 - 发送消息（含"只传文件"）时会自动在消息末尾附上 `@文件名` 引用，聊天记录里直接可见本条消息带了哪些文件；模型按名对应资源 ID 再读取。（输入框里的 `@` 属于 Harness 自带的工作区文件/会话引用，插件不与之冲突。）
 - 点击聊天消息里的蓝色 `@文件名`，右侧会滑出该文件的预览面板（Esc、点遮罩或 × 关闭）。
 
+## 更新日志
+
+- **v0.4.9（2026-08-29）**：预览不再遮挡左侧——关闭改为 × / Esc，左边滚动、语音输入完全不受影响。
+- **v0.4.8（2026-08-29）**：预览面板顶部/底部与左边会话列精确对齐（窗口缩放自动重排）。
+- **v0.4.7（2026-08-29）**：修复左右分栏错位——只收缩会话滚动容器，消息与输入框作为整体左移、与预览列对齐。
+- **v0.4.6（2026-08-29）**：预览只对"本会话真实附件的文件"开放（`@邮箱`、随手打的 `@文字` 不再触发），输入框内的点击一律忽略。
+- **v0.4.5（2026-08-29）**：Excel/CSV 预览改为带格线的表格（换行显示）；预览面板与对话布局对齐。
+- **v0.4.4（2026-08-29）**：会话发送历史——发送过的文件在移除附件卡后仍可预览。
+- **v0.4.3（2026-08-29）**：预览失败时给出明确原因，不再笼统提示"无法预览"。
+- **v0.4.0（2026-08-29）**：点击聊天中的 `@文件名` 在右侧预览文件内容。
+- **v0.3.0（2026-08-29）**：发送消息自动附带 `@文件名` 引用，聊天记录可见、模型可定位。
+
+完整历史见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 支持格式
 
 | 类别 | 格式 |
@@ -105,21 +119,13 @@ npm run pack:check
 
 当前测试覆盖文件选择、真实进度、取消、会话隔离、配额、缓存回收、恶意 ZIP 防护，以及真实 DOCX/XLSX/PPTX/PDF/ODF/EPUB/RTF 解析。
 
-## 更新日志
-
-- **v0.4.7（2026-08-29）**：修复左右分栏错位——只收缩会话滚动容器，消息与输入框作为整体左移、与预览列对齐。
-- **v0.4.6（2026-08-29）**：预览只对"本会话真实附件的文件"开放（`@邮箱`、随手打的 `@文字` 不再触发），输入框内的点击一律忽略。
-- **v0.4.5（2026-08-29）**：Excel/CSV 预览改为带格线的表格（换行显示）；预览面板与对话布局对齐。
-- **v0.4.4（2026-08-29）**：会话发送历史——发送过的文件在移除附件卡后仍可预览。
-- **v0.4.3（2026-08-29）**：预览失败时给出明确原因，不再笼统提示"无法预览"。
-- **v0.4.0（2026-08-29）**：点击聊天中的 `@文件名` 在右侧预览文件内容。
-- **v0.3.0（2026-08-29）**：发送消息自动附带 `@文件名` 引用，聊天记录可见、模型可定位。
-
-完整历史见 [CHANGELOG.md](CHANGELOG.md)。
-
 ## English
 
-`dsh-file-resource` adds a unified `attach` entry to the existing DeepSeek Harness Web `+` menu. Images continue through Harness's native attachment pipeline. Documents are parsed locally into session-scoped, content-addressed resources and exposed to the model through one bounded read tool. Sending with attached documents appends `@fileName` mentions to the message, so the conversation visibly shows what was sent and the model maps the names to resource IDs; clicking an `@fileName` in the conversation previews the file in a right-side panel. (The composer's `@` itself belongs to Harness's native workspace-file references.) Drag any file anywhere over the window, or paste copied files into the composer, to attach them.
+`dsh-file-resource` adds a unified `attach` entry to the existing DeepSeek Harness Web `+` menu. Images continue through Harness's native attachment pipeline. Documents are parsed locally into session-scoped, content-addressed resources and exposed to the model through one bounded read tool. Sending with attached documents appends `@fileName` mentions to the message, so the conversation visibly shows what was sent and the model maps the names to resource IDs; clicking an `@fileName` in the conversation previews the file in a right-side split view. (The composer's `@` itself belongs to Harness's native workspace-file references.) Drag any file anywhere over the window, or paste copied files into the composer, to attach them.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full history. Recent highlights: sent messages carry visible `@fileName` mentions (v0.3.0); clicking an `@fileName` opens a right-side preview in a split view, spreadsheets render as bordered tables (v0.4.0–v0.4.5); previews are limited to files actually attached or sent in this conversation (v0.4.6); the split is aligned with the conversation column (v0.4.7/0.4.8); preview no longer blocks the left side (v0.4.9); a per-session send history keeps sent-file previews alive after the draft card is removed (v0.4.4).
 
 Supported documents: PDF, DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, EPUB, plus common text and source-code formats. Legacy DOC/XLS/PPT files and automatic OCR for image-only PDFs are intentionally unsupported.
 
@@ -131,10 +137,6 @@ dsh plugin --profile web add dsh-file-resource@0.1.1
 ```
 
 The plugin has no telemetry or third-party file upload. See the Chinese sections above for cache limits, token estimates, security controls, and performance measurements.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for the full history. Recent highlights: sent messages carry visible `@fileName` mentions (v0.3.0); clicking an `@fileName` opens a right-side preview in a split view, spreadsheets render as bordered tables (v0.4.0–v0.4.5); previews are limited to files actually attached or sent in this conversation (v0.4.6); the split is aligned with the conversation column (v0.4.7); a per-session send history keeps sent-file previews alive even after the draft card is removed (v0.4.4).
 
 ## License
 

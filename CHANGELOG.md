@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.9] - 2026-08-29
+
+### Fixed
+
+- **Preview no longer blocks the conversation side**: the click-outside
+  backdrop is removed — the left column stays fully interactive (scrolling,
+  typing, voice input) while the preview is open; close via the × button or
+  Escape.
+- **README changelog moved up**: the 更新日志 / Changelog section now sits
+  right after the feature overview on the GitHub homepage so recent changes
+  are visible at a glance.
+
 ## [0.4.8] - 2026-08-29
 
 ### Changed
@@ -157,6 +169,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.9]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.9
 [0.4.8]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.8
 [0.4.7]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.7
 [0.4.6]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.6
