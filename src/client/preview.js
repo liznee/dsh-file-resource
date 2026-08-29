@@ -80,6 +80,26 @@ const PREVIEW_STYLES = `
   white-space: pre-wrap;
   word-break: break-word;
 }
+.dsh-file-resource-preview-table {
+  border-collapse: collapse;
+  font-family: var(--dsw-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
+  font-size: 12.5px;
+  margin: 0;
+  min-width: 100%;
+}
+.dsh-file-resource-preview-table td {
+  border: 1px solid rgba(127, 127, 127, .24);
+  line-height: 1.5;
+  max-width: 300px;
+  overflow: hidden;
+  padding: 3px 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dsh-file-resource-preview-table tr[data-head='true'] td {
+  background: rgba(127, 127, 127, .10);
+  font-weight: 600;
+}
 .dsh-file-resource-preview-status {
   color: var(--dsw-alias-label-secondary);
   font-size: 13px;
@@ -98,6 +118,24 @@ const PREVIEW_STYLES = `
 `
 
 let current = null // { close(documentRef) }
+
+const TABLE_KINDS = /^(?:xlsx|ods|csv|tsv)$/iu
+
+/** Spreadsheet kinds rendered as an actual table with cell borders. */
+export function isSpreadsheetKind(kind) {
+  return TABLE_KINDS.test(String(kind ?? ''))
+}
+
+/** Parse tab/newline separated preview text into table rows, or null. */
+export function spreadsheetTable(text) {
+  const value = String(text ?? '')
+  if (!value.includes('\t')) return null
+  const rows = value
+    .split(/\r?\n/u)
+    .map(line => line.split('\t'))
+    .filter(row => row.some(cell => String(cell ?? '').trim() !== ''))
+  return rows.length === 0 ? null : rows
+}
 
 /** A short "@name" spoken by the clicked element, or null. */
 export function previewCandidateName(node) {
@@ -183,6 +221,22 @@ export async function openPreview({ document: documentRef = document, sessionId,
   panel.append(header, body, truncated)
   documentRef.body?.append?.(backdrop, panel)
 
+  // Align the panel with the conversation's vertical bounds so its top and
+  // bottom edges sit on the same horizontal lines as the chat layout.
+  const alignPanel = () => {
+    const scroll = typeof documentRef.querySelector === 'function'
+      ? documentRef.querySelector('[data-conversation-scroll]') ?? documentRef.querySelector('[data-composer-card]')
+      : null
+    const rect = typeof scroll?.getBoundingClientRect === 'function' ? scroll.getBoundingClientRect() : null
+    if (rect === null || rect.height === 0) return
+    const height = documentRef.defaultView?.innerHeight
+      ?? documentRef.documentElement?.clientHeight
+      ?? 0
+    panel.style.top = `${Math.max(0, Math.round(rect.top))}px`
+    panel.style.bottom = `${Math.max(0, Math.round(height - rect.bottom))}px`
+  }
+  alignPanel()
+
   let disposed = false
   const onKey = event => { if (event.key === 'Escape') destroy() }
   const destroy = () => {
@@ -204,6 +258,23 @@ export async function openPreview({ document: documentRef = document, sessionId,
     body.append(pre)
   }
 
+  const renderTable = rows => {
+    body.textContent = ''
+    const table = documentRef.createElement('table')
+    table.className = 'dsh-file-resource-preview-table'
+    rows.forEach((row, index) => {
+      const tr = documentRef.createElement('tr')
+      if (index === 0) tr.dataset.head = 'true'
+      for (const cell of row) {
+        const td = documentRef.createElement('td')
+        td.textContent = String(cell ?? '')
+        tr.append(td)
+      }
+      table.append(tr)
+    })
+    body.append(table)
+  }
+
   try {
     const response = await fetch(RESOURCE_ENDPOINT, {
       method: 'GET',
@@ -220,7 +291,9 @@ export async function openPreview({ document: documentRef = document, sessionId,
     const preview = payload.preview
     title.textContent = `@${preview.fileName}`
     kind.textContent = preview.kind
-    render(preview.text || '')
+    const rows = isSpreadsheetKind(preview.kind) ? spreadsheetTable(preview.text) : null
+    if (rows !== null) renderTable(rows)
+    else render(preview.text || '')
     truncated.hidden = preview.truncated !== true
     truncated.textContent = t('preview-truncated') ?? 'Preview truncated'
   } catch (error) {

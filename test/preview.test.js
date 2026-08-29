@@ -1,6 +1,21 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { previewCandidateName, referenceChipName } from '../src/client/preview.js'
+import { isSpreadsheetKind, previewCandidateName, referenceChipName, spreadsheetTable } from '../src/client/preview.js'
+
+describe('spreadsheet preview', () => {
+  it('recognizes spreadsheet kinds', () => {
+    assert.equal(isSpreadsheetKind('xlsx'), true)
+    assert.equal(isSpreadsheetKind('ods'), true)
+    assert.equal(isSpreadsheetKind('pdf'), false)
+    assert.equal(isSpreadsheetKind(''), false)
+  })
+
+  it('parses tab/newline text into rows and keeps single-cell rows', () => {
+    assert.deepEqual(spreadsheetTable('类型\t张数\nAP\t4\n'), [['类型', '张数'], ['AP', '4']])
+    assert.deepEqual(spreadsheetTable('只一行'), null)
+    assert.equal(spreadsheetTable(''), null)
+  })
+})
 
 function node(text, parent = null) {
   return { textContent: text, parentElement: parent }

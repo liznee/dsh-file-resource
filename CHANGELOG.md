@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.5] - 2026-08-29
+
+### Changed
+
+- **Spreadsheet previews render as a real table** with cell gridlines and a
+  bolded header row (xlsx / ods / csv / tsv), instead of raw tab text. Note:
+  the extractor reads cell values only — colors, fonts and merged cells are
+  not preserved in the preview.
+- **The preview panel aligns with the conversation layout**: its top and
+  bottom edges now line up with the chat's vertical bounds instead of floating
+  as a full-height overlay.
+
 ## [0.4.4] - 2026-08-29
 
 ### Fixed
@@ -115,6 +127,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.5]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.5
 [0.4.4]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.4
 [0.4.3]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.3
 [0.4.2]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.2
