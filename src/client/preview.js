@@ -113,6 +113,24 @@ export function previewCandidateName(node) {
   return null
 }
 
+/**
+ * The Harness renders "@file" references as blue chips whose visible text
+ * omits the "@" and whose full label lives in the title attribute. Resolve
+ * the underlying file name from such a chip, or null.
+ */
+export function referenceChipName(node) {
+  if (typeof node?.closest !== 'function') return null
+  const chip = node.closest('[data-ref-chip]')
+  if (chip === null) return null
+  const raw = String(chip.getAttribute?.('title') ?? chip.textContent ?? '').trim()
+  let name = raw.replace(/^@/u, '').replace(/^"|"$/gu, '')
+  const slash = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'))
+  if (slash !== -1) name = name.slice(slash + 1)
+  name = name.trim()
+  if (name === '' || name.length > 200) return null
+  return name
+}
+
 export function installPreviewStyles(documentRef = document) {
   if (typeof documentRef?.createElement !== 'function') return () => {}
   if (documentRef.querySelector(`style[data-plugin-css="${PREVIEW_STYLE_ID}"]`) !== null) return () => {}

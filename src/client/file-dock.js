@@ -7,7 +7,7 @@ import {
   shouldCommitDraftFiles,
   uploadBrowserResource,
 } from './resources.js'
-import { installPreviewStyles, openPreview, previewCandidateName } from './preview.js'
+import { installPreviewStyles, openPreview, previewCandidateName, referenceChipName } from './preview.js'
 
 const MAX_FILES = 20
 const MAX_FILE_BYTES = 50 * 1024 * 1024
@@ -250,7 +250,7 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
       if (typeof target?.closest === 'function' && target.closest(
         '[data-file-resource-dock],[data-file-resource-preview],.dsh-file-resource-preview',
       ) !== null) return
-      const name = previewCandidateName(target)
+      const name = referenceChipName(target) ?? previewCandidateName(target)
       if (name === null) return
       event.preventDefault()
       void openPreview({ document, sessionId, fileName: name, t })

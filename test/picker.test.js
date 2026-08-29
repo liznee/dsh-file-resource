@@ -313,21 +313,56 @@ test('global drop target overlays the window and feeds dropped files to onFiles'
   }
   const received = []
   let prevented = 0
+  let stopped = 0
+  const makeEvent = (init = {}) => ({
+    isTrusted: true,
+    dataTransfer: { files: [], types: [] },
+    preventDefault() { prevented += 1 },
+    stopImmediatePropagation() { stopped += 1 },
+    ...init,
+  })
   const removeDrop = installGlobalDropTarget({ document: documentRef, window: windowRef, onFiles: files => received.push(...files) })
   const drop = windowEvents.drop
 
-  windowEvents.dragenter({ dataTransfer: { types: ['Files'] }, preventDefault() {} })
+  windowEvents.dragenter(makeEvent({ dataTransfer: { files: [], types: ['Files'] } }))
   assert.equal(overlay.className, 'dsh-file-resource-drop-overlay')
+  assert.equal(stopped, 1) // native image-only drop handling is suppressed
 
-  drop({
-    dataTransfer: { files: [{ name: 'a.pdf', type: 'application/pdf' }], types: ['Files'] },
-    preventDefault() { prevented += 1 },
-  })
-  assert.equal(prevented, 1)
+  drop(makeEvent({ dataTransfer: { files: [{ name: 'a.pdf', type: 'application/pdf' }], types: ['Files'] } }))
+  assert.equal(prevented, 2)
+  assert.equal(stopped, 2)
   assert.equal(received.length, 1)
   assert.equal(received[0].name, 'a.pdf')
   assert.equal(overlay.removed, true)
 
+  removeDrop()
+})
+
+test('global drop target ignores synthetic drops it dispatched itself (no duplicate loop)', () => {
+  const windowEvents = {}
+  const style = { dataset: {}, remove() {}, textContent: '' }
+  const overlay = { className: '', remove() {}, textContent: '' }
+  const documentRef = {
+    addEventListener() {},
+    body: { append() {} },
+    createElement: tag => tag === 'style' ? style : overlay,
+    head: { append() {} },
+    querySelector: () => null,
+    removeEventListener() {},
+  }
+  let received = 0
+  const windowRef = {
+    addEventListener(type, handler) { windowEvents[type] = handler },
+    removeEventListener() {},
+  }
+  const removeDrop = installGlobalDropTarget({ document: documentRef, window: windowRef, onFiles: () => { received += 1 } })
+  windowEvents.drop({
+    isTrusted: false, // dispatchImagesAsDrop() re-dispatches with isTrusted false
+    dataTransfer: { files: [{ name: 'shot.png', type: 'image/png' }], types: ['Files'] },
+    preventDefault() {},
+    stopImmediatePropagation() {},
+  })
+  assert.equal(received, 0)
   removeDrop()
 })
 

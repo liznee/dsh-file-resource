@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.2] - 2026-08-29
+
+### Fixed
+
+- **Drag-and-drop no longer triggers the native "images only" notice**: file
+  drags are fully captured by the plugin (the Harness native drop overlay and
+  its `仅支持 PNG/JPG/WebP/GIF` prompt no longer appear), and also **fixed the
+  duplicate-attachment loop** — the synthetic drop re-dispatched for the native
+  image pipeline used to re-enter the plugin's own drop listener.
+- **Clicking the blue `@fileName` chip now previews again**: the Harness chip
+  hides the leading `@` in its visible text, so the preview matcher now
+  resolves the name from the chip's `data-ref-chip`/`title` attributes
+  (falling back to plain `@name` text).
+
 ## [0.4.1] - 2026-08-29
 
 ### Removed
@@ -80,6 +94,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.2]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.2
 [0.4.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.1
 [0.4.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.0
 [0.3.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.3.0

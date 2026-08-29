@@ -242,21 +242,33 @@ export function installGlobalDropTarget({
     if (!dragHasFiles(event)) return
     depth += 1
     event.preventDefault()
+    // Stop propagation so the Harness native drop overlay (which only accepts
+    // images and shows "仅支持 png/jpg/gif" notices) never reacts to file
+    // drags — documents are handled here.
+    event.stopImmediatePropagation()
     show()
   }
   const onOver = event => {
-    if (dragHasFiles(event)) event.preventDefault()
+    if (!dragHasFiles(event)) return
+    event.preventDefault()
+    event.stopImmediatePropagation()
   }
   const onLeave = event => {
     if (!dragHasFiles(event)) return
     depth = Math.max(0, depth - 1)
     if (depth === 0) hide()
+    event.stopImmediatePropagation()
   }
   const onDrop = event => {
+    // Skip our own synthetic drops: dispatchImagesAsDrop() re-dispatches a
+    // drop on document for the Harness native intake; without this guard it
+    // would re-enter this listener and duplicate the attachment forever.
+    if (event.isTrusted === false) return
     depth = 0
     hide()
     if (!dragHasFiles(event)) return
     event.preventDefault()
+    event.stopImmediatePropagation()
     const files = Array.from(event.dataTransfer?.files ?? [])
     if (files.length > 0) {
       onFiles(files, event)
