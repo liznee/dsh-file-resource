@@ -59,6 +59,23 @@ export class ResourceService {
     return { removed: true }
   }
 
+  /** Read a bounded preview of an attached file by its file name. */
+  async preview(sessionId, fileName) {
+    const resources = await this.store.listSession(sessionId)
+    const match = resources.find(resource => String(resource.fileName) === String(fileName))
+    if (match === undefined) throw new Error('no attached file with that name')
+    const derived = await this.store.readDerivedForSession(sessionId, match.resourceId)
+    const selection = readSelection(derived, { selector: 'summary', limit: 12_000 })
+    return {
+      fileName: match.fileName,
+      kind: match.kind,
+      size: match.size,
+      text: selection.text,
+      truncated: selection.truncated,
+      nextOffset: selection.nextOffset,
+    }
+  }
+
   promptFor(sessionId) {
     return resourcePrompt(this.store.listSessionSync(sessionId))
   }

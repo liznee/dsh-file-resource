@@ -62,6 +62,29 @@ test('route rejects cross-origin and oversized requests without calling the serv
   assert.equal(calls, 0)
 })
 
+test('preview operation reads an attached file by name for the session', async () => {
+  const calls = []
+  const route = createResourceRoute({
+    preview: async (sessionId, fileName) => {
+      calls.push([sessionId, fileName])
+      return { fileName, kind: 'xlsx', text: 'cells', truncated: false }
+    },
+  })
+  const req = request(undefined, {
+    'x-dsh-operation': 'preview',
+    'x-dsh-session': 'session-a',
+    'x-dsh-file-name': encodeURIComponent('剑来收藏卡册.xlsx'),
+  }, 'GET')
+  const res = response()
+  await route.handler(req, res)
+  assert.equal(res.statusCode, 200)
+  assert.deepEqual(calls[0], ['session-a', '剑来收藏卡册.xlsx'])
+  assert.deepEqual(res.json(), {
+    ok: true,
+    preview: { fileName: '剑来收藏卡册.xlsx', kind: 'xlsx', text: 'cells', truncated: false },
+  })
+})
+
 test('route does not leak stack traces or local paths in error responses', async () => {
   const route = createResourceRoute({ upload: async () => { throw new Error('C:\\private\\secret.txt\nSTACK') } })
   const req = request(Buffer.from('x'), { 'content-length': '1', 'x-dsh-operation': 'upload' })

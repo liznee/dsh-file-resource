@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.0] - 2026-08-29
+
+### Added
+
+- **Right-side file preview**: click an `@fileName` reference in the
+  conversation to open a slide-over preview panel on the right with a bounded
+  read of the file (new session-scoped `preview` route operation). Esc, the
+  backdrop, or the × button closes it.
+
 ## [0.3.0] - 2026-08-29
 
 ### Added
@@ -61,6 +70,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.0
 [0.3.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.3.0
 [0.2.1]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.2.1
 [0.2.0]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.2.0

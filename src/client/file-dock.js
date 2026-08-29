@@ -8,6 +8,7 @@ import {
   uploadBrowserResource,
 } from './resources.js'
 import { MentionController } from './mention.js'
+import { installPreviewStyles, openPreview, previewCandidateName } from './preview.js'
 
 const MAX_FILES = 20
 const MAX_FILE_BYTES = 50 * 1024 * 1024
@@ -18,6 +19,8 @@ export const zh = {
   cancel: '取消并移除文件', remove: '移除文件', tooMany: '一次最多添加 20 个文件',
   tooLarge: '单个文件不能超过 50 MB', batchTooLarge: '本次文件总大小不能超过 200 MB',
   sendFailed: '文件发送失败，请重试',
+  preview: '文件预览', 'preview-close': '关闭预览', 'preview-loading': '正在读取预览…',
+  'preview-truncated': '预览已截断，仅显示开头部分', 'preview-failed': '无法预览此文件',
 }
 
 export const en = {
@@ -25,6 +28,8 @@ export const en = {
   cancel: 'Cancel and remove file', remove: 'Remove file', tooMany: 'You can add up to 20 files at once',
   tooLarge: 'Each file must be 50 MB or smaller', batchTooLarge: 'The file batch must be 200 MB or smaller',
   sendFailed: 'The files could not be sent; try again',
+  preview: 'File preview', 'preview-close': 'Close preview', 'preview-loading': 'Reading preview…',
+  'preview-truncated': 'Preview truncated; only the beginning is shown', 'preview-failed': 'Preview unavailable for this file',
 }
 
 /**
@@ -303,6 +308,26 @@ export function FileResourceDock({ sessionId, input, inputActions, t }) {
       mentionController.current = null
     }
   }, [])
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return undefined
+    const removeStyles = installPreviewStyles(document)
+    const onPreviewClick = event => {
+      const target = event?.target
+      if (typeof target?.closest === 'function' && target.closest(
+        '[data-file-resource-mention],[data-file-resource-dock],[data-file-resource-preview],.dsh-file-resource-preview',
+      ) !== null) return
+      const name = previewCandidateName(target)
+      if (name === null) return
+      event.preventDefault()
+      void openPreview({ document, sessionId, fileName: name, t })
+    }
+    document.addEventListener('click', onPreviewClick, true)
+    return () => {
+      document.removeEventListener('click', onPreviewClick, true)
+      removeStyles()
+    }
+  }, [sessionId, t])
 
   const commitMention = React.useCallback(name => {
     mentionController.current?.commit(name)

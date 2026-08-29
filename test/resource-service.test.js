@@ -46,6 +46,19 @@ test('committing a draft keeps the resource readable but removes it from pending
   })
 })
 
+test('preview reads an attached file by name, scoped to the session', async () => {
+  await fixture(async service => {
+    await service.upload({
+      sessionId: 'session-a', fileName: 'notes.txt', mediaType: 'text/plain', bytes: Buffer.from('alpha\nbeta'),
+    })
+    const preview = await service.preview('session-a', 'notes.txt')
+    assert.equal(preview.fileName, 'notes.txt')
+    assert.match(preview.text, /alpha/)
+    await assert.rejects(() => service.preview('session-a', 'missing.txt'))
+    await assert.rejects(() => service.preview('session-b', 'notes.txt'))
+  })
+})
+
 test('tool execution is scoped to the calling agent session', async () => {
   await fixture(async service => {
     const uploaded = await service.upload({

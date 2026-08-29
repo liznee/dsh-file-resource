@@ -83,6 +83,12 @@ export function createResourceRoute(service, {
           send(response, 200, { ok: true, resources: await service.listPending(sessionId) })
           return
         }
+        if (operation === 'preview' && request.method === 'GET') {
+          const fileName = decodeHeader(header(request, 'x-dsh-file-name'), 'file name')
+          const preview = await service.preview(sessionId, fileName)
+          send(response, 200, { ok: true, preview })
+          return
+        }
         if (operation === 'remove' && request.method === 'DELETE') {
           const resourceId = validateResourceId(header(request, 'x-dsh-resource'))
           send(response, 200, { ok: true, ...(await service.remove(sessionId, resourceId)) })
