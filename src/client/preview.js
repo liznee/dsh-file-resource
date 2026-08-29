@@ -29,11 +29,12 @@ const PREVIEW_STYLES = `
   width: var(--dsh-preview-width, 50vw);
   z-index: 1501;
 }
-/* True split view: while the preview is open the conversation column shifts
-   left and the right half belongs to the preview panel. */
-body[data-dsh-preview-open] [data-conversation-scroll],
-body[data-dsh-preview-open] [data-composer-seat] {
-  margin-right: var(--dsh-preview-width, 50vw);
+/* True split view: the conversation column (messages + composer, which live
+   inside ONE [data-conversation-scroll] wrapper) shifts left and the right
+   half belongs to the preview panel. Only the scroll wrapper is shrunk, so
+   messages and the input stay aligned with each other. */
+body[data-dsh-preview-open] [data-conversation-scroll] {
+  margin-right: var(--dsh-preview-width, 50vw) !important;
 }
 .dsh-file-resource-preview-header {
   align-items: center;

@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.7] - 2026-08-29
+
+### Fixed
+
+- **Split view alignment**: shrinking only the outer `[data-conversation-scroll]`
+  wrapper (which holds both the messages and the composer) so the conversation
+  column shifts together — previously the composer bar was shrunk twice while
+  the message history did not move, breaking alignment with the preview panel.
+
 ## [0.4.6] - 2026-08-29
 
 ### Fixed
@@ -138,6 +147,7 @@ All notable changes to this project are documented in this file.
 - Conversation-language continuity for attachment-only messages and document replies.
 - Chinese and English interface copy, tests, package verification, and release documentation.
 
+[0.4.7]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.7
 [0.4.6]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.6
 [0.4.5]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.5
 [0.4.4]: https://github.com/liznee/dsh-file-resource/releases/tag/v0.4.4
