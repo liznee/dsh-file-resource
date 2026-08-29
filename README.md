@@ -1,6 +1,8 @@
 # dsh-file-resource
 
 [![CI](https://github.com/liznee/dsh-file-resource/actions/workflows/ci.yml/badge.svg)](https://github.com/liznee/dsh-file-resource/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/dsh-file-resource)](https://www.npmjs.com/package/dsh-file-resource)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 DeepSeek Harness Web 的本地文件输入插件。在输入框原有的 `+` 菜单顶部增加 `attach`，并用分隔线与 Harness 原生命令区分；不会再增加一个单独按钮。
 
